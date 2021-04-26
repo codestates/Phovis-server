@@ -1,7 +1,7 @@
 ---
 name: Error handling 템플릿
 about: Create a report to help us improve
-title: Error handling
+title: "[Error handling] 2021-00-00"
 labels: Error, bug
 assignees: ''
 

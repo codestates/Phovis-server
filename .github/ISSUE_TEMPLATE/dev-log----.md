@@ -1,7 +1,7 @@
 ---
 name: Dev-log 템플릿
 about: Dev-log 회고를 위한 테이블입니다
-title: "✍️ Dev Log"
+title: "[✍️ Dev Log] 이름 / 2021-00-00"
 labels: Devlog, 기록하자, 프로젝트는 잘 굴러 가겠지
 assignees: ''
 
