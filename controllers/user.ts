@@ -1,7 +1,11 @@
-import express from 'express';
+import { Request, Response } from 'express';
+import axios from 'axios';
+import { getRepository } from 'typeorm';
+import jwt from 'jsonwebtoken';
 
-export default {
-  get: (req: express.Request, res: express.Response) => {
-    res.send('user nice');
-  },
-};
+// TODO:
+class userController {
+  // user Controller
+}
+
+export default new userController();

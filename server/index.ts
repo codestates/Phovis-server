@@ -1,6 +1,8 @@
 import express from 'express';
 import fs from 'fs';
-import { userRouter } from '../router';
+import 'reflect-metadata';
+
+import { authRouter, userRouter } from '../router';
 import https from 'https';
 import * as middleware from '../middleware/index';
 import { createConnection } from 'typeorm';
@@ -13,13 +15,13 @@ const port = process.env.DEPLOY_PORT || 4000;
 // middleware
 app.use(middleware.cors);
 app.use(middleware.express);
-app.use(express.json());
 
 app.get('/', (req: express.Request, res: express.Response) => {
-  res.send({ data: 'Hello World' });
+  res.send('Hello World');
 });
 
 // rotuer
+app.use('/auth', authRouter);
 app.use('/user', userRouter);
 
 const server = https.createServer(
