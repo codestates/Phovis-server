@@ -3,6 +3,7 @@ import fs from 'fs';
 import { userRouter } from '../router';
 import https from 'https';
 import * as middleware from '../middleware/index';
+import { createConnection } from 'typeorm';
 
 type port = string;
 
@@ -21,17 +22,22 @@ app.get('/', (req: express.Request, res: express.Response) => {
 // rotuer
 app.use('/user', userRouter);
 
-const server = https
-  .createServer(
-    {
-      key: fs.readFileSync(__dirname + '/key.pem', 'utf-8'),
-      cert: fs.readFileSync(__dirname + '/cert.pem', 'utf-8'),
-    },
-    app
-  )
-  .listen(port, () => {
-    console.log(`middleware: ${Object.keys(middleware)}`);
-    console.log(`https server on : ${port} port`);
-  });
+const server = https.createServer(
+  {
+    key: fs.readFileSync(__dirname + '/key.pem', 'utf-8'),
+    cert: fs.readFileSync(__dirname + '/cert.pem', 'utf-8'),
+  },
+  app
+);
+
+createConnection()
+  .then(() => {
+    server.listen(port, () => {
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      console.log(`middleware: ${Object.keys(middleware)}`);
+      console.log(`https server on : ${port} port`);
+    });
+  })
+  .catch(console.log);
 
 export default server;
