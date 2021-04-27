@@ -6,6 +6,7 @@ import { authRouter, userRouter } from '../router';
 import https from 'https';
 import * as middleware from '../middleware/index';
 import { createConnection } from 'typeorm';
+import '@config';
 
 type port = string;
 
