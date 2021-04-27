@@ -4,6 +4,8 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
   JoinTable,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Location } from './Location';
 
@@ -14,6 +16,22 @@ export class Tag {
 
   @Column()
   tagName!: string;
+
+  @OneToOne(() => Location)
+  locationId!: Location;
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+  })
+  public createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
+  })
+  public updatedAt!: Date;
 
   @OneToOne(() => Location)
   @JoinTable()

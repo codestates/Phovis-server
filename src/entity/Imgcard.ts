@@ -5,6 +5,8 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
   JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from './User';
 import { Image } from './Image';
@@ -19,13 +21,26 @@ export class Imagecard {
   description!: string;
 
   @ManyToOne(() => User, (user) => user.imagecards)
-  user!: User;
+  userId!: User;
 
   @OneToOne(() => Image)
   @JoinColumn()
-  image!: Image;
+  imageId!: Image;
 
   @OneToOne(() => Location)
   @JoinColumn()
-  location!: Location;
+  locationId!: Location;
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+  })
+  public createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
+  })
+  public updatedAt!: Date;
 }

@@ -2,22 +2,22 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Entity,
-  Column,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { User } from './User';
 import { Content } from './Content';
 
 @Entity()
-export class Image {
+export class Favourite {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
-  uri!: string;
+  @ManyToOne(() => User, (user) => user.favourite)
+  user!: User;
 
-  @Column()
-  type?: string;
+  @ManyToOne(() => Content, (content) => content.favourite)
+  content!: Content;
 
   @CreateDateColumn({
     type: 'timestamp',

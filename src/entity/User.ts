@@ -1,6 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Bookmark } from './Bookmark';
-import { Like } from './Like';
+import { Favourite } from './Like';
 import { Follow } from './Follow';
 import { Imagecard } from './Imgcard';
 
@@ -21,15 +28,34 @@ export class User {
   @Column()
   type!: string;
 
+  @Column()
+  imgUrl!: string;
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+  })
+  public createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
+  })
+  public updatedAt!: Date;
+
   @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
-  bookmarks!: Bookmark[];
+  bookmark!: Bookmark[];
 
-  @OneToMany(() => Follow, (follow) => follow.user)
-  follows!: Follow[];
+  @OneToMany(() => Follow, (follow) => follow.follower)
+  follower!: Follow[];
 
-  @OneToMany(() => Like, (like) => like.user)
-  likes!: Like[];
+  @OneToMany(() => Favourite, (favourite) => favourite.user)
+  favourite!: Favourite[];
 
-  @OneToMany(() => Imagecard, (imagecard) => imagecard.user)
+  @OneToMany(() => Follow, (follow) => follow.following)
+  following!: Follow[];
+
+  @OneToMany(() => Imagecard, (imagecard) => imagecard.userId)
   imagecards!: Imagecard[];
 }

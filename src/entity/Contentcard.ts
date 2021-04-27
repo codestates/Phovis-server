@@ -4,12 +4,15 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
   JoinColumn,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Image } from './Image';
 import { Content } from './Content';
 
 @Entity()
-export class Imagecard {
+export class ContentCard {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
@@ -20,7 +23,19 @@ export class Imagecard {
   @JoinColumn()
   image!: Image;
 
-  @OneToOne(() => Content)
-  @JoinColumn()
+  @ManyToOne(() => Content, (content) => content.contentCard)
   content!: Content;
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+  })
+  public createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
+  })
+  public updatedAt!: Date;
 }
