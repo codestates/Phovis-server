@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon server/index.ts",
     "test": "mocha --exit -r ts-node/register **/*.test.ts",
-    "start": "ts-node server/index.ts",
+    "start": "tsc && ts-node server/index.ts",
     "migration": "npx ts-node --transpile-only ./node_modules/typeorm/cli.js migration:run"
   },
   "repository": {
