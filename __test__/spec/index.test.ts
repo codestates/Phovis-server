@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import app from '../../server/index';
 import { agent as request } from 'supertest';
 import { describe } from 'mocha';
@@ -14,7 +12,6 @@ describe('Index Test', () => {
   });
 
   it('should GET / test', async function () {
-    //
     nock('https://localhost:4000').get('/').reply(200, 'Hello World');
 
     const res = await agent.get('/');

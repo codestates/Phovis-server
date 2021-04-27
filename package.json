@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon server/index.ts",
     "test": "mocha --exit -r ts-node/register **/*.test.ts",
-    "start": "ts-node src/index.ts",
+    "start": "tsc && ts-node server/index.ts",
     "migration": "npx ts-node --transpile-only ./node_modules/typeorm/cli.js migration:run"
   },
   "repository": {
@@ -18,10 +18,13 @@
   "bugs": {
     "url": "https://github.com/codestates/Phovis-server/issues"
   },
-  "homepage": "https://github.com/codestates/Phovis-server#readme",
+  "homepage": "https://phovis.ga",
   "dependencies": {
+    "axios": "^0.21.1",
     "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
     "mysql": "^2.14.1",
     "reflect-metadata": "^0.1.10",
     "typeorm": "0.2.32"
@@ -30,6 +33,7 @@
     "@types/chai": "^4.2.16",
     "@types/cors": "^2.8.10",
     "@types/express": "^4.17.11",
+    "@types/jsonwebtoken": "^8.5.1",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^11.1.0",
     "@types/node": "^8.0.29",
@@ -39,6 +43,7 @@
     "chai": "^4.3.4",
     "eslint": "^7.25.0",
     "mocha": "^8.3.2",
+    "nock": "^13.0.11",
     "nodemon": "^2.0.7",
     "prettier": "^2.2.1",
     "supertest": "^6.1.3",

@@ -15,7 +15,12 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
-    "types": []
+    "types": [],
+    "paths": {
+      "@config": ["config/index.ts"],
+      "@interface/*": ["interface/*"],
+      "@entity/*": ["src/entity/*"]
+    }
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "**/*.spec.ts"]
