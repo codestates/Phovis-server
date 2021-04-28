@@ -40,6 +40,7 @@ export interface kakaoTokenRes {
   refresh_token: string;
   refresh_token_expires_in: number;
   scope: string;
+  error?: string;
 }
 export interface kakaoUserRes {
   id: number;

@@ -65,6 +65,8 @@ class authController {
   };
 
   public google = async (req: Request, res: Response): Promise<void> => {
+    // TODO:
+    // refresh token set cookie
     try {
       const { token } = req.body as googleOauthResponse;
       if (!token) res.status(403).send('fill token'); // 토큰을 안보내면
@@ -124,74 +126,91 @@ class authController {
   };
 
   public kakao = async (req: Request, res: Response): Promise<void> => {
+    // TODO:
     // 이메일이 선택임 아무거나 넣어야 할수도 있음
-    const { kakaoCode } = req.body;
-    if (kakaoCode) res.status(404).send('bad request');
-    const kakaoTokenData = await axios.post<kakaoTokenRes>(
-      'https://kauth.kakao.com/oauth/token',
-      {
-        grant_type: 'authorization_code',
-        client_id: process.env.KAKAO_CLIENT_ID as string,
-        redirect_uri: 'https//localhost:3000/auth/kakao',
-        code: kakaoCode,
-      },
-      { headers: { application: 'x-www-form-urlencoded;charset=utf-8' } }
-    );
-    if (!kakaoTokenData) res.status(403).send('Not authentication Kakao');
-    const { access_token } = kakaoTokenData.data;
-    const { data } = await axios.post<kakaoUserRes>(
-      'https://kapi.kakao.com/v2/user/me',
-      {
-        property_keys: ['kakao_account.profile', 'kakao_account.email'],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
+    // redirect url 배포시에 변경해야함
+    // refresh token set cookies
+    // 허가 url 추가 필요함 (카카오 설정 페이지에서)
+    try {
+      const { kakaoCode } = req.body;
+      if (!kakaoCode) {
+        res.status(404).send('bad request').end();
       }
-    );
-    const user = await getRepository(User)
-      .createQueryBuilder('user')
-      .where('user.id = :id', { id: `${data.id}` })
-      .getOne();
-    if (user) {
-      const { id } = user;
-      const accessToken = jwt.sign(
-        { id },
-        process.env.ACCESS_SECRET as string,
-        { expiresIn: '1h' }
-      );
-      const refreshToken = jwt.sign(
-        { id },
-        process.env.REFRESH_SECRET as string
-      );
-      res.status(200).send({ accessToken, refreshToken });
-    } else {
-      const { identifiers } = await getRepository(User)
-        .createQueryBuilder()
-        .insert()
-        .into(User)
-        .values([
-          {
-            id: `${data.id}`,
-            userName: data.kakao_account.profile.nickname,
-            email: data.kakao_account.email || '',
-            password: 'hashcrypto',
-            type: 'kakao',
+      const kakaoTokenData = await axios.post<kakaoTokenRes>(
+        `https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id=${process.env.KAKAO_CLIENT_ID}&redirect_uri=http://localhost:3000/auth/kakao&code=${kakaoCode}&client_secret=${process.env.KAKAO_CLIENT_SECRET}`,
+        null,
+        {
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded;charset=utf-8',
           },
-        ])
-        .execute();
-      const { id } = identifiers[0] as User;
-      const accessToken = jwt.sign(
-        { id },
-        process.env.ACCESS_SECRET as string,
-        { expiresIn: '1h' }
+        }
       );
-      const refreshToken = jwt.sign(
-        { id },
-        process.env.REFRESH_SECRET as string
+
+      if (!kakaoTokenData || kakaoTokenData.data.error) {
+        res.status(403).send('Not authentication Kakao').end();
+      }
+
+      const { access_token } = kakaoTokenData.data;
+      const { data } = await axios.post<kakaoUserRes>(
+        'https://kapi.kakao.com/v2/user/me',
+        {
+          property_keys: ['kakao_account.profile', 'kakao_account.email'],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
       );
-      res.status(201).send({ accessToken, refreshToken });
+      const user = await getRepository(User)
+        .createQueryBuilder('user')
+        .where('user.id = :id', { id: `${data.id}` })
+        .getOne();
+
+      if (user) {
+        const { id } = user;
+        const accessToken = jwt.sign(
+          { id },
+          process.env.ACCESS_SECRET as string,
+          { expiresIn: '1h' }
+        );
+        const refreshToken = jwt.sign(
+          { id },
+          process.env.REFRESH_SECRET as string
+        );
+        res.status(200).send({ accessToken, refreshToken });
+      } else {
+        const { identifiers } = await getRepository(User)
+          .createQueryBuilder()
+          .insert()
+          .into(User)
+          .values([
+            {
+              id: `${data.id}`,
+              userName: data.kakao_account.profile.nickname,
+              email: data.kakao_account.email || '',
+              password: 'hashcrypto',
+              type: 'kakao',
+            },
+          ])
+          .execute();
+
+        const { id } = identifiers[0] as User;
+        const accessToken = jwt.sign(
+          { id },
+          process.env.ACCESS_SECRET as string,
+          { expiresIn: '1h' }
+        );
+
+        const refreshToken = jwt.sign(
+          { id },
+          process.env.REFRESH_SECRET as string
+        );
+        res.status(201).send({ accessToken, refreshToken });
+      }
+    } catch (e) {
+      console.log(e);
+      throw e;
     }
   };
 }
