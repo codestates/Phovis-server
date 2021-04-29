@@ -89,6 +89,10 @@ class authController {
           { id },
           process.env.REFRESH_SECRET as string
         );
+        res.cookie('refreshToken', refreshToken, {
+          maxAge: 86400,
+          httpOnly: true,
+        });
         res.status(201).send({ accessToken, refreshToken });
       } else {
         // 기존에 없는 유저라면 새로 유저 등록
