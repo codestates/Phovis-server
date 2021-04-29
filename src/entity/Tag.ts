@@ -6,6 +6,7 @@ import {
   JoinTable,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToMany,
 } from 'typeorm';
 import { Location } from './Location';
 
@@ -17,8 +18,11 @@ export class Tag {
   @Column()
   tagName!: string;
 
-  @OneToOne(() => Location)
-  locationId!: Location;
+  @ManyToMany(() => Location, {
+    cascade: ['insert'],
+  })
+  @JoinTable()
+  location!: Location[];
 
   @CreateDateColumn({
     type: 'timestamp',
@@ -32,8 +36,4 @@ export class Tag {
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
   public updatedAt!: Date;
-
-  @OneToOne(() => Location)
-  @JoinTable()
-  location!: Location;
 }

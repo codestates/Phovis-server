@@ -3,17 +3,18 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToMany,
-  JoinTable,
+  JoinColumn,
   OneToOne,
   OneToMany,
+  ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  JoinTable,
 } from 'typeorm';
 import { Tag } from './Tag';
 import { Image } from './Image';
 import { ContentCard } from './Contentcard';
-import { Bookmark } from './Bookmark';
-import { Favourite } from './Like';
+import { User } from './User';
 
 @Entity()
 export class Content {
@@ -21,35 +22,33 @@ export class Content {
   id!: string;
 
   @Column()
-  imgId!: number;
+  title!: string;
 
-  @Column()
+  @Column({ length: 500 })
   description!: string;
 
-  @Column()
-  locationId!: number;
+  @ManyToOne(() => User, (user) => user.content)
+  user!: User;
 
-  @Column()
-  userId!: number;
+  @ManyToMany(() => User)
+  bookmark!: User[];
 
-  @Column()
-  tagId!: number;
-
-  @OneToMany(() => Bookmark, (bookmark) => bookmark.content)
-  bookmark!: Bookmark[];
-
-  @OneToMany(() => Favourite, (favourite) => favourite.content)
-  favourite!: Favourite[];
+  @ManyToMany(() => User)
+  favourite!: User[];
 
   @OneToMany(() => ContentCard, (contentcard) => contentcard.content)
   contentCard!: ContentCard[];
 
   @OneToOne(() => Image)
+  @JoinColumn()
   image!: Image;
 
-  @ManyToMany(() => Tag)
+  @ManyToMany(() => Tag, {
+    cascade: ['insert', 'update'],
+    nullable: true,
+  })
   @JoinTable()
-  tags!: Tag[];
+  tag!: Tag[];
 
   @CreateDateColumn({
     type: 'timestamp',

@@ -5,11 +5,11 @@ import {
   OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
-import { Bookmark } from './Bookmark';
-import { Favourite } from './Like';
-import { Follow } from './Follow';
-import { Imagecard } from './Imgcard';
+import { Imagecard } from './Imagcard';
+import { Content } from './Content';
 
 @Entity()
 export class User {
@@ -44,18 +44,62 @@ export class User {
   })
   public updatedAt!: Date;
 
-  @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
-  bookmark!: Bookmark[];
+  @OneToMany(() => Content, (content) => content.user, {
+    cascade: ['insert', 'update'],
+  })
+  content!: Content[];
 
-  @OneToMany(() => Follow, (follow) => follow.follower)
-  follower!: Follow[];
+  @ManyToMany(() => User, (user) => user.following, {
+    cascade: ['insert', 'update'],
+  })
+  @JoinTable({
+    name: 'follow',
+    joinColumn: {
+      name: 'follower',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'following',
+      referencedColumnName: 'id',
+    },
+  })
+  follower!: User[];
 
-  @OneToMany(() => Favourite, (favourite) => favourite.user)
-  favourite!: Favourite[];
+  @ManyToMany(() => User, (user) => user.follower)
+  following!: User[];
 
-  @OneToMany(() => Follow, (follow) => follow.following)
-  following!: Follow[];
+  @ManyToMany(() => Content, (content) => content.favourite, {
+    cascade: ['insert', 'update'],
+  })
+  @JoinTable({
+    name: 'favourite',
+    joinColumn: {
+      name: 'user',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'content',
+      referencedColumnName: 'id',
+    },
+  })
+  favourite!: Content[];
 
-  @OneToMany(() => Imagecard, (imagecard) => imagecard.userId)
+  @OneToMany(() => Imagecard, (imagecard) => imagecard.user)
   imagecards!: Imagecard[];
+
+  @ManyToMany(() => Content, (content) => content.bookmark, {
+    cascade: ['insert', 'update'],
+  })
+  @JoinTable({
+    name: 'bookmark',
+    joinColumn: {
+      name: 'user',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'content',
+      referencedColumnName: 'id',
+    },
+  })
+  bookmark!: Content[];
 }

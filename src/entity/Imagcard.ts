@@ -21,15 +21,15 @@ export class Imagecard {
   description!: string;
 
   @ManyToOne(() => User, (user) => user.imagecards)
-  userId!: User;
+  user!: User;
 
   @OneToOne(() => Image)
   @JoinColumn()
-  imageId!: Image;
+  image!: Image;
 
   @OneToOne(() => Location)
   @JoinColumn()
-  locationId!: Location;
+  location!: Location;
 
   @CreateDateColumn({
     type: 'timestamp',

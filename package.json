@@ -7,7 +7,8 @@
     "dev": "nodemon server/index.ts",
     "test": "mocha --exit -r ts-node/register **/*.test.ts",
     "start": "tsc && ts-node server/index.ts",
-    "migration": "npx ts-node --transpile-only ./node_modules/typeorm/cli.js migration:run"
+    "migration": "npx ts-node --transpile-only ./node_modules/typeorm/cli.js migration:run",
+    "seed": "npx ts-node ./src/index.ts"
   },
   "repository": {
     "type": "git",

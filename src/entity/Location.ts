@@ -4,7 +4,10 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
+import { Content } from './Content';
 
 @Entity()
 export class Location {
@@ -13,6 +16,13 @@ export class Location {
 
   @Column()
   location!: string;
+
+  @ManyToMany(() => Content, {
+    cascade: ['insert', 'update'],
+    nullable: true,
+  })
+  @JoinTable()
+  content!: Content[];
 
   @CreateDateColumn({
     type: 'timestamp',

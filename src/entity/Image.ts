@@ -5,6 +5,7 @@ import {
   Column,
   ManyToOne,
   PrimaryGeneratedColumn,
+  OneToOne,
 } from 'typeorm';
 import { Content } from './Content';
 
