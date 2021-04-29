@@ -131,21 +131,24 @@ class authController {
         .getOne();
       if (user) {
         // 만약 기존에 있는 유저라면
-        const { id } = user;
         const accessToken = jwt.sign(
-          { id },
+          { id: user.id },
           process.env.ACCESS_SECRET as string,
           { expiresIn: '1h' }
         );
         const refreshToken = jwt.sign(
-          { id },
-          process.env.REFRESH_SECRET as string
+          { id: user.id },
+          process.env.REFRESH_SECRET as string,
+          { expiresIn: '10d' }
         );
-        res.cookie('refreshToken', refreshToken, {
-          maxAge: 86400,
-          httpOnly: true,
-        });
-        res.status(201).send({ accessToken, refreshToken });
+        res
+          .status(201)
+          .cookie('refreshToken', refreshToken, {
+            maxAge: 864000,
+            secure: true,
+            sameSite: 'none',
+          })
+          .send({ accessToken });
       } else {
         // 기존에 없는 유저라면 새로 유저 등록
         const { identifiers } = await getRepository(User)
@@ -165,13 +168,22 @@ class authController {
         const { id } = identifiers[0] as User;
         const accessToken = jwt.sign(
           { id },
-          process.env.ACCESS_SECRET as string
+          process.env.ACCESS_SECRET as string,
+          { expiresIn: '1h' }
         );
         const refreshToken = jwt.sign(
           { id },
-          process.env.REFRESH_SECRET as string
+          process.env.REFRESH_SECRET as string,
+          { expiresIn: '10d' }
         );
-        res.status(201).send({ accessToken, refreshToken });
+        res
+          .status(201)
+          .cookie('refreshToken', refreshToken, {
+            maxAge: 864000,
+            secure: true,
+            sameSite: 'none',
+          })
+          .send({ accessToken });
       }
     } catch (error) {
       console.log(error);
@@ -219,9 +231,17 @@ class authController {
       );
       const refreshToken = jwt.sign(
         { id },
-        process.env.REFRESH_SECRET as string
+        process.env.REFRESH_SECRET as string,
+        { expiresIn: '10d' }
       );
-      res.status(200).send({ accessToken, refreshToken });
+      res
+        .status(200)
+        .cookie('refreshToken', refreshToken, {
+          maxAge: 864000,
+          secure: true,
+          sameSite: 'none',
+        })
+        .send({ accessToken, refreshToken });
     } else {
       const { identifiers } = await getRepository(User)
         .createQueryBuilder()
@@ -245,9 +265,17 @@ class authController {
       );
       const refreshToken = jwt.sign(
         { id },
-        process.env.REFRESH_SECRET as string
+        process.env.REFRESH_SECRET as string,
+        { expiresIn: '10d' }
       );
-      res.status(201).send({ accessToken, refreshToken });
+      res
+        .status(201)
+        .cookie('refreshToken', refreshToken, {
+          maxAge: 864000,
+          secure: true,
+          sameSite: 'none',
+        })
+        .send({ accessToken, refreshToken });
     }
   };
 }
