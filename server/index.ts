@@ -2,8 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import 'reflect-metadata';
 
-import { authRouter, userRouter } from '../router';
-import cookieparser from 'cookie-parser';
+import { authRouter } from '../router';
 import https from 'https';
 import * as middleware from '../middleware/index';
 import { createConnection } from 'typeorm';
