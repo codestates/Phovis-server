@@ -1,24 +1,87 @@
-import 'reflect-metadata';
-import { createConnection, Connection } from 'typeorm';
-import { User } from './entity/User';
+import {
+  makeRelation,
+  insertJoinColumn,
+  transformInstance,
+} from './make_relation';
+import { Group } from './relations';
+import { getRepository, createConnection, getConnection } from 'typeorm';
+import {
+  ContentCardSeed,
+  ContentSeed,
+  UserSeed,
+  ImageSeed,
+  ImageCardSeed,
+  LocationSeed,
+  TagSeed,
+} from './seed/index';
+import {
+  Content,
+  ContentCard,
+  Image,
+  Imagecard,
+  Location,
+  Tag,
+  User,
+} from './entity';
 
-const connection = async (): Promise<Connection> =>
-  await createConnection().then(async (connection) => {
-    console.log('Inserting a new user into the database...');
-    const user = new User();
-    user.userName = 'jeong';
-    user.email = 'dsjoh111@gmail.com';
-    user.password = '1234qwer';
-    await connection.manager.save(user);
-    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-    console.log('Saved a new user with id: ' + user.id);
+const InsertSeedData = async () => {
+  try {
+    const connection = await createConnection();
 
-    console.log('Loading users from the database...');
-    const users = await connection.manager.find(User);
-    console.log('Loaded users: ', users);
+    let contentcardinstance = transformInstance(ContentCardSeed, ContentCard);
+    let imageinstance = transformInstance(ImageSeed, Image);
+    let imagecardinstance = transformInstance(ImageCardSeed, Imagecard);
+    let locationinsatance = transformInstance(LocationSeed, Location);
+    let taginstance = transformInstance(TagSeed, Tag);
+    let userinstance = transformInstance(UserSeed, User);
+    let contentinstance = transformInstance(ContentSeed, Content);
 
-    console.log('Here you can setup and run express/koa/any other framework.');
-    return connection;
-  });
+    try {
+      await insertJoinColumn(taginstance, 'location', locationinsatance);
+      await insertJoinColumn(contentcardinstance, 'image', imageinstance, 'O');
+      await insertJoinColumn(contentinstance, 'image', imageinstance, 'O');
+      await insertJoinColumn(
+        contentinstance,
+        'contentCard',
+        contentcardinstance
+      );
+      await insertJoinColumn(
+        imagecardinstance,
+        'location',
+        locationinsatance,
+        'O'
+      );
+      await insertJoinColumn(imagecardinstance, 'image', imageinstance, 'O');
+      await insertJoinColumn(userinstance, 'content', contentinstance);
+      await insertJoinColumn(userinstance, 'imagecards', imagecardinstance);
 
-export default connection;
+      let result: any[] = [];
+      for (let i = 0; i < userinstance.length; i++) {
+        result.unshift(userinstance[i]);
+      }
+      await insertJoinColumn(userinstance, 'follower', result);
+      await insertJoinColumn(userinstance, 'bookmark', contentinstance);
+      await insertJoinColumn(userinstance, 'favourite', contentinstance);
+
+      await connection.getRepository(Tag).save(taginstance);
+      await connection.getRepository(Location).save(locationinsatance);
+      await connection.getRepository(Image).save(imageinstance);
+      await connection.getRepository(ContentCard).save(contentcardinstance);
+      await connection.getRepository(User).save(userinstance);
+      await connection.getRepository(Content).save(contentinstance);
+      await connection.getRepository(Imagecard).save(imagecardinstance);
+    } catch (err) {
+      console.log(err.name, ' : ', err.message, err.lineNumber);
+    }
+
+    Group.forEach(
+      async (el) => await makeRelation(el.entity, el.fields, connection)
+    );
+    console.log('make Seed check your database');
+    await connection.close();
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+InsertSeedData();
