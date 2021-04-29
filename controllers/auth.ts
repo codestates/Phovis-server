@@ -11,11 +11,52 @@ import {
   kakaoTokenRes,
   kakaoUserRes,
 } from '@interface/index';
-import { stringify } from 'querystring';
 // TODO:
 // 1. google에서 password 어떻게 넣을지 생각해보기
 // 2.
 class authController {
+  public requestToken = async (req: Request, res: Response): Promise<void> => {
+    if (!req.cookies.refreshToken) {
+      res.status(403).send('not refresh token');
+    } else {
+      try {
+        const tokenResponse = jwt.verify(
+          req.cookies.refreshToken,
+          process.env.REFRESH_SECRET as string
+        ) as { id: string };
+        console.log(tokenResponse);
+        const user = await getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: tokenResponse.id })
+          .getOne();
+        console.log(user);
+        if (user) {
+          const accessToken = jwt.sign(
+            { id: user.id },
+            process.env.ACCESS_SECRET as string,
+            { expiresIn: '1h' }
+          );
+          const refreshToken = jwt.sign(
+            { id: user.id },
+            process.env.REFRESH_SECRET as string,
+            { expiresIn: '10d' }
+          );
+          res
+            .status(200)
+            .cookie('refreshToken', refreshToken, {
+              maxAge: 864000,
+              secure: true,
+              sameSite: 'none',
+            })
+            .send({ accessToken });
+        } else {
+          res.status(403).send('invalid refresh token');
+        }
+      } catch (_e) {
+        res.status(403).send('expire');
+      }
+    }
+  };
   public login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body as loginReqeustBody;
     if (!email || !password) {
@@ -34,9 +75,17 @@ class authController {
       );
       const refreshToken = jwt.sign(
         { id: user.id },
-        process.env.REFRESH_SECRET as string
+        process.env.REFRESH_SECRET as string,
+        { expiresIn: '10d' }
       );
-      res.status(201).send({ accessToken, refreshToken });
+      res
+        .status(201)
+        .cookie('refreshToken', refreshToken, {
+          maxAge: 864000,
+          secure: true,
+          sameSite: 'none',
+        })
+        .send({ accessToken });
     } else {
       res.status(404).send('not authorization');
     }

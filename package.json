@@ -7,7 +7,7 @@
     "dev": "nodemon -r tsconfig-paths/register server/index.ts",
     "test": "mocha --exit -r ts-node/register **/*.test.ts",
     "start": "ts-node -r tsconfig-paths/register server/index.ts",
-    "migration": "npx ts-node --transpile-only ./node_modules/typeorm/cli.js migration:run"
+    "migration": "npx ts-node ./node_modules/typeorm/cli.js migration:run"
   },
   "repository": {
     "type": "git",
@@ -21,17 +21,20 @@
   "homepage": "https://phovis.ga",
   "dependencies": {
     "axios": "^0.21.1",
+    "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
     "mysql": "^2.14.1",
     "reflect-metadata": "^0.1.10",
+    "tsconfig-paths": "^3.9.0",
     "typeorm": "0.2.32",
     "uninstall": "*"
   },
   "devDependencies": {
     "@types/chai": "^4.2.16",
+    "@types/cookie-parser": "^1.4.2",
     "@types/cors": "^2.8.10",
     "@types/express": "^4.17.11",
     "@types/jsonwebtoken": "^8.5.1",

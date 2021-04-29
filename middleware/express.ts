@@ -1,3 +1,3 @@
 import express from 'express';
-
-export default [express.json()];
+import cookieParser from 'cookie-parser';
+export default [express.json(), cookieParser()];

@@ -3,6 +3,7 @@ import fs from 'fs';
 import 'reflect-metadata';
 
 import { authRouter, userRouter } from '../router';
+import cookieparser from 'cookie-parser';
 import https from 'https';
 import * as middleware from '../middleware/index';
 import { createConnection } from 'typeorm';
@@ -15,7 +16,7 @@ const port = process.env.DEPLOY_PORT || 4000;
 
 // middleware
 app.use(middleware.cors);
-app.use(middleware.express);
+app.use(...middleware.express);
 
 app.get('/', (req: express.Request, res: express.Response) => {
   res.send('Hello World');
