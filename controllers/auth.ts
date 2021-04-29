@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import axios from 'axios';
 import { getRepository } from 'typeorm';
 import jwt from 'jsonwebtoken';
-import { User } from '@entity/User';
+import { User } from '@entity/index';
 import {
   loginReqeustBody,
   signupRequestBody,

@@ -1,11 +1,11 @@
 import express from 'express';
 import fs from 'fs';
 import 'reflect-metadata';
-
-import { authRouter, userRouter } from '../router';
+import { User } from '@entity/index';
+import { authRouter, contentRouter } from '../router';
 import https from 'https';
 import * as middleware from '../middleware/index';
-import { createConnection } from 'typeorm';
+import { createConnection, getRepository } from 'typeorm';
 import '@config';
 
 type port = string;
@@ -17,13 +17,24 @@ const port = process.env.DEPLOY_PORT || 4000;
 app.use(middleware.cors);
 app.use(middleware.express);
 
-app.get('/', (req: express.Request, res: express.Response) => {
-  res.send('Hello World');
+app.get('/', async (req: express.Request, res: express.Response) => {
+  try {
+    const result = await getRepository(User)
+      .createQueryBuilder()
+      .where('userName = :name', { name: 'qwerag' })
+      .getOneOrFail();
+    console.log(result);
+    res.send('Hello World');
+  } catch (err) {
+    console.log(err);
+  }
 });
 
-// rotuer
+// router
 app.use('/auth', authRouter);
 // app.use('/user', userRouter);
+
+app.use('/content', contentRouter);
 
 const server = https.createServer(
   {

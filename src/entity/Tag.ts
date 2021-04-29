@@ -16,7 +16,7 @@ export class Tag {
   id!: number;
 
   @Column()
-  tagName!: string;
+  tagName?: string;
 
   @ManyToMany(() => Location, {
     cascade: ['insert'],

@@ -14,8 +14,20 @@ export class Location {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   location!: string;
+
+  @Column({
+    nullable: true,
+  })
+  lat!: number;
+
+  @Column({
+    nullable: true,
+  })
+  lng!: number;
 
   @ManyToMany(() => Content, {
     cascade: ['insert', 'update'],

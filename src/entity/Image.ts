@@ -14,10 +14,14 @@ export class Image {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   uri!: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   type?: string;
 
   @CreateDateColumn({

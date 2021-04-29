@@ -21,10 +21,12 @@ export class Content {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   title!: string;
 
-  @Column({ length: 500 })
+  @Column({ length: 500, nullable: true })
   description!: string;
 
   @ManyToOne(() => User, (user) => user.content)
@@ -39,7 +41,10 @@ export class Content {
   @OneToMany(() => ContentCard, (contentcard) => contentcard.content)
   contentCard!: ContentCard[];
 
-  @OneToOne(() => Image)
+  @OneToOne(() => Image, {
+    cascade: ['insert', 'update'],
+    nullable: true,
+  })
   @JoinColumn()
   image!: Image;
 
@@ -48,7 +53,7 @@ export class Content {
     nullable: true,
   })
   @JoinTable()
-  tag!: Tag[];
+  tag?: Tag[];
 
   @CreateDateColumn({
     type: 'timestamp',

@@ -29,7 +29,7 @@ export class User {
   type!: string;
 
   @Column()
-  imgUrl!: string;
+  imgUrl?: string;
 
   @CreateDateColumn({
     type: 'timestamp',
@@ -45,7 +45,7 @@ export class User {
   public updatedAt!: Date;
 
   @OneToMany(() => Content, (content) => content.user, {
-    cascade: ['insert', 'update'],
+    cascade: ['insert'],
   })
   content!: Content[];
 
