@@ -6,6 +6,7 @@ import { authRouter, userRouter } from '../router';
 import https from 'https';
 import * as middleware from '../middleware/index';
 import { createConnection } from 'typeorm';
+import '@config';
 
 type port = string;
 
@@ -22,7 +23,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
 
 // rotuer
 app.use('/auth', authRouter);
-app.use('/user', userRouter);
+// app.use('/user', userRouter);
 
 const server = https.createServer(
   {

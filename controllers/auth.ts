@@ -8,11 +8,13 @@ import {
   signupRequestBody,
   googleOauthResponse,
   googleUserinfo,
+  kakaoTokenRes,
+  kakaoUserRes,
 } from '@interface/index';
-import '@config';
-
+import { stringify } from 'querystring';
 // TODO:
 // 1. google에서 password 어떻게 넣을지 생각해보기
+// 2.
 class authController {
   public login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body as loginReqeustBody;
@@ -27,15 +29,17 @@ class authController {
     if (user) {
       const accessToken = jwt.sign(
         { id: user.id },
-        process.env.ACCESS_SECRET as string
+        process.env.ACCESS_SECRET as string,
+        { expiresIn: '1h' }
       );
       const refreshToken = jwt.sign(
         { id: user.id },
         process.env.REFRESH_SECRET as string
       );
       res.status(201).send({ accessToken, refreshToken });
+    } else {
+      res.status(404).send('not authorization');
     }
-    res.status(404).send('not authorization');
   };
 
   public signup = async (req: Request, res: Response): Promise<void> => {
@@ -54,9 +58,10 @@ class authController {
           { userName: userName || 'unkown', email, password, type: 'email' },
         ])
         .execute();
-      res.status(200).send('ok');
+      res.status(201).send('ok');
+    } else {
+      res.status(404).send('valid email');
     }
-    res.status(404).send('valid email');
   };
 
   public google = async (req: Request, res: Response): Promise<void> => {
@@ -67,6 +72,7 @@ class authController {
         'https://oauth2.googleapis.com/tokeninfo',
         { id_token: token }
       );
+      if (!data.sub) res.status(403).send('not authorized'); // 토큰을 안보내면
       const user = await getRepository(User)
         .createQueryBuilder('user')
         .where('user.id = :id', { id: data.sub })
@@ -76,7 +82,8 @@ class authController {
         const { id } = user;
         const accessToken = jwt.sign(
           { id },
-          process.env.ACCESS_SECRET as string
+          process.env.ACCESS_SECRET as string,
+          { expiresIn: '1h' }
         );
         const refreshToken = jwt.sign(
           { id },
@@ -115,58 +122,77 @@ class authController {
       res.status(404).send(error);
     }
   };
+
   public kakao = async (req: Request, res: Response): Promise<void> => {
     // 이메일이 선택임 아무거나 넣어야 할수도 있음
     const { kakaoCode } = req.body;
     if (kakaoCode) res.status(404).send('bad request');
-    type kakaoTokenRes = {
-      token_type: string;
-      access_token: string;
-      expires_in: number;
-      refresh_token: string;
-      refresh_token_expires_in: number;
-      scope: string;
-    };
-
-    const { data } = await axios.post<kakaoTokenRes>(
+    const kakaoTokenData = await axios.post<kakaoTokenRes>(
       'https://kauth.kakao.com/oauth/token',
       {
         grant_type: 'authorization_code',
         client_id: process.env.KAKAO_CLIENT_ID as string,
-        redirect_uri: 'https//localhost:3000',
+        redirect_uri: 'https//localhost:3000/auth/kakao',
         code: kakaoCode,
       },
       { headers: { application: 'x-www-form-urlencoded;charset=utf-8' } }
     );
-    const { data } = await axios.post<kakaoTokenRes>(
+    if (!kakaoTokenData) res.status(403).send('Not authentication Kakao');
+    const { access_token } = kakaoTokenData.data;
+    const { data } = await axios.post<kakaoUserRes>(
       'https://kapi.kakao.com/v2/user/me',
       {
-        grant_type: 'authorization_code',
-        client_id: process.env.KAKAO_CLIENT_ID as string,
-        redirect_uri: 'https//localhost:3000',
-        code: kakaoCode,
+        property_keys: ['kakao_account.profile', 'kakao_account.email'],
       },
       {
         headers: {
-          application: 'x-www-form-urlencoded;charset=utf-8',
-          Authorization: `Bearer ${data.access_token}`,
+          Authorization: `Bearer ${access_token}`,
         },
       }
     );
-
     const user = await getRepository(User)
       .createQueryBuilder('user')
-      .insert()
-      .into(User)
-      .values([
-        {
-          userName: data.name,
-          email: data.email,
-          password: 'hashcrypto',
-          type: 'google',
-        },
-      ])
-      .execute();
+      .where('user.id = :id', { id: `${data.id}` })
+      .getOne();
+    if (user) {
+      const { id } = user;
+      const accessToken = jwt.sign(
+        { id },
+        process.env.ACCESS_SECRET as string,
+        { expiresIn: '1h' }
+      );
+      const refreshToken = jwt.sign(
+        { id },
+        process.env.REFRESH_SECRET as string
+      );
+      res.status(200).send({ accessToken, refreshToken });
+    } else {
+      const { identifiers } = await getRepository(User)
+        .createQueryBuilder()
+        .insert()
+        .into(User)
+        .values([
+          {
+            id: `${data.id}`,
+            userName: data.kakao_account.profile.nickname,
+            email: data.kakao_account.email || '',
+            password: 'hashcrypto',
+            type: 'kakao',
+          },
+        ])
+        .execute();
+      const { id } = identifiers[0] as User;
+      const accessToken = jwt.sign(
+        { id },
+        process.env.ACCESS_SECRET as string,
+        { expiresIn: '1h' }
+      );
+      const refreshToken = jwt.sign(
+        { id },
+        process.env.REFRESH_SECRET as string
+      );
+      res.status(201).send({ accessToken, refreshToken });
+    }
   };
 }
 
