@@ -3,11 +3,18 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToMany,
-  JoinTable,
+  JoinColumn,
+  OneToOne,
   OneToMany,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinTable,
 } from 'typeorm';
 import { Tag } from './Tag';
 import { Image } from './Image';
+import { ContentCard } from './Contentcard';
+import { User } from './User';
 
 @Entity()
 export class Content {
@@ -15,24 +22,44 @@ export class Content {
   id!: string;
 
   @Column()
-  imgId!: number;
+  title!: string;
 
-  @Column()
+  @Column({ length: 500 })
   description!: string;
 
-  @Column()
-  locationId!: number;
+  @ManyToOne(() => User, (user) => user.content)
+  user!: User;
 
-  @Column()
-  userId!: number;
+  @ManyToMany(() => User)
+  bookmark!: User[];
 
-  @Column()
-  tagId!: number;
+  @ManyToMany(() => User)
+  favourite!: User[];
 
-  @OneToMany(() => Image, (image) => image.content)
-  images!: Image[];
+  @OneToMany(() => ContentCard, (contentcard) => contentcard.content)
+  contentCard!: ContentCard[];
 
-  @ManyToMany(() => Tag)
+  @OneToOne(() => Image)
+  @JoinColumn()
+  image!: Image;
+
+  @ManyToMany(() => Tag, {
+    cascade: ['insert', 'update'],
+    nullable: true,
+  })
   @JoinTable()
-  tags!: Tag[];
+  tag!: Tag[];
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+  })
+  public createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
+  })
+  public updatedAt!: Date;
 }

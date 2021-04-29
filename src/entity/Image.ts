@@ -1,4 +1,12 @@
-import { Entity, Column, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  CreateDateColumn,
+  UpdateDateColumn,
+  Entity,
+  Column,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  OneToOne,
+} from 'typeorm';
 import { Content } from './Content';
 
 @Entity()
@@ -10,11 +18,18 @@ export class Image {
   uri!: string;
 
   @Column()
-  message!: string;
-
-  @Column()
   type?: string;
 
-  @ManyToOne(() => Content, (content) => content.images)
-  content!: Content;
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+  })
+  public createdAt!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
+  })
+  public updatedAt!: Date;
 }

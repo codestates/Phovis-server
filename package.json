@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "nodemon -r tsconfig-paths/register server/index.ts",
     "test": "mocha --exit -r ts-node/register **/*.test.ts",
-    "start": "ts-node -r tsconfig-paths/register server/index.ts",
-    "migration": "npx ts-node ./node_modules/typeorm/cli.js migration:run"
+    "start": "tsc && ts-node server/index.ts",
+    "generate:mig": "npx ts-node ./node_modules/typeorm/cli.js migration:generate -n PostRefactoring",
+    "migration": "npx ts-node ./node_modules/typeorm/cli.js migration:run",
+    "seed": "npx ts-node ./src/index.ts"
   },
   "repository": {
     "type": "git",
