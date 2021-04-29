@@ -63,3 +63,39 @@ export interface kakaoUserRes {
     gender: string;
   };
 }
+
+export interface content {
+  imageid: number;
+  title: string;
+  mainimageuer: string;
+  tags: string[];
+  description: string;
+  location: Location;
+  user: User;
+  like: number;
+  images: Image[];
+  potocards: photocard[];
+}
+
+type Location = {
+  location: string;
+  lat: number;
+  lng: number;
+};
+type User = {
+  id: string;
+  userName: string;
+};
+
+type Image = {
+  uri: string;
+  description: string;
+  type: string;
+};
+
+type photocard = {
+  userid: User;
+  userName: User;
+  image: Image;
+  message: string;
+};
