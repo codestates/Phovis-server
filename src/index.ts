@@ -35,37 +35,33 @@ const InsertSeedData = async () => {
     let taginstance = transformInstance(TagSeed, Tag);
     let userinstance = transformInstance(UserSeed, User);
     let contentinstance = transformInstance(ContentSeed, Content);
+
     try {
       await insertJoinColumn(taginstance, 'location', locationinsatance);
-      await insertJoinColumn(contentcardinstance, 'image', imageinstance);
-      await insertJoinColumn(contentinstance, 'image', imageinstance);
+      await insertJoinColumn(contentcardinstance, 'image', imageinstance, 'O');
+      await insertJoinColumn(contentinstance, 'image', imageinstance, 'O');
       await insertJoinColumn(
         contentinstance,
         'contentCard',
         contentcardinstance
       );
-      await insertJoinColumn(imagecardinstance, 'location', locationinsatance);
-      await insertJoinColumn(imagecardinstance, 'image', imageinstance);
-      console.log('시작 :', userinstance[0]);
-
+      await insertJoinColumn(
+        imagecardinstance,
+        'location',
+        locationinsatance,
+        'O'
+      );
+      await insertJoinColumn(imagecardinstance, 'image', imageinstance, 'O');
       await insertJoinColumn(userinstance, 'content', contentinstance);
-      console.log('시작 :', userinstance[0]);
-
       await insertJoinColumn(userinstance, 'imagecards', imagecardinstance);
-      console.log('시작 :', userinstance[0]);
 
       let result: any[] = [];
       for (let i = 0; i < userinstance.length; i++) {
         result.unshift(userinstance[i]);
       }
-
       await insertJoinColumn(userinstance, 'follower', result);
-
       await insertJoinColumn(userinstance, 'bookmark', contentinstance);
-      console.log('시작 :', userinstance[0]);
-
       await insertJoinColumn(userinstance, 'favourite', contentinstance);
-      console.log('마지막 :', userinstance[0]);
 
       await connection.getRepository(Tag).save(taginstance);
       await connection.getRepository(Location).save(locationinsatance);

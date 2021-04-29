@@ -16,10 +16,15 @@ export const makeRelation = async function (
 export const insertJoinColumn = function (
   instance: any[],
   target: string,
-  joininstance: any[]
+  joininstance: any[],
+  type: string = 'M'
 ) {
   instance.forEach((el, idx) => {
-    el[target] = [joininstance[idx]];
+    if (type === 'M') {
+      el[target] = [joininstance[idx]];
+    } else if (type === 'O') {
+      el[target] = joininstance[idx];
+    }
     el = {
       ...el,
     };

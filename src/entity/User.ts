@@ -84,7 +84,9 @@ export class User {
   })
   favourite!: Content[];
 
-  @OneToMany(() => Imagecard, (imagecard) => imagecard.user)
+  @OneToMany(() => Imagecard, (imagecard) => imagecard.user, {
+    cascade: ['insert', 'update'],
+  })
   imagecards!: Imagecard[];
 
   @ManyToMany(() => Content, (content) => content.bookmark, {
