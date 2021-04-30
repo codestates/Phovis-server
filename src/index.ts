@@ -25,8 +25,11 @@ import {
 } from './entity';
 
 const InsertSeedData = async () => {
+  const connection = await createConnection();
   try {
-    const connection = await createConnection();
+    Group.forEach(
+      async (el) => await makeRelation(el.entity, el.fields, connection)
+    );
 
     let contentcardinstance = transformInstance(ContentCardSeed, ContentCard);
     let imageinstance = transformInstance(ImageSeed, Image);
@@ -74,14 +77,11 @@ const InsertSeedData = async () => {
       console.log(err.name, ' : ', err.message, err.lineNumber);
     }
 
-    Group.forEach(
-      async (el) => await makeRelation(el.entity, el.fields, connection)
-    );
     console.log('make Seed check your database');
-    await connection.close();
   } catch (err) {
     console.log(err);
   }
+  await connection.close();
 };
 
 InsertSeedData();
