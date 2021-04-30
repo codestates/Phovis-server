@@ -23,7 +23,7 @@ function checkSSL(): boolean {
 
 // middleware
 app.use(middleware.cors);
-app.use(middleware.express);
+app.use(...middleware.express);
 
 app.get('/', (req: express.Request, res: express.Response) => {
   res.send('Hello World');
@@ -31,7 +31,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
 
 // rotuer
 app.use('/auth', authRouter);
-// app.use('/user', userRouter);
+app.use('/user', userRouter);
 
 let liveServer = checkSSL() ? 'https' : 'http';
 const server = checkSSL()
