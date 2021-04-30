@@ -5,5 +5,6 @@ import express from 'express';
 const router = express.Router();
 
 router.get('/info', userController.getinfo);
+router.put('/info', userController.updateInfo);
 
 export default router;
