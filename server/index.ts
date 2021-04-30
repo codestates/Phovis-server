@@ -19,11 +19,6 @@ app.use(middleware.express);
 
 app.get('/', async (req: express.Request, res: express.Response) => {
   try {
-    const result = await getRepository(User)
-      .createQueryBuilder()
-      .where('userName = :name', { name: 'qwerag' })
-      .getOneOrFail();
-    console.log(result);
     res.send('Hello World');
   } catch (err) {
     console.log(err);

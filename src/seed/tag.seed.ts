@@ -15,4 +15,7 @@ export const TagSeed: Tagseed[] = [
   {
     tagName: '새벽',
   },
+  {
+    tagName: '저녁',
+  },
 ];

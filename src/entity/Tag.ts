@@ -13,7 +13,7 @@ import { Location } from './Location';
 @Entity()
 export class Tag {
   @PrimaryGeneratedColumn()
-  id!: number;
+  id?: number;
 
   @Column()
   tagName?: string;

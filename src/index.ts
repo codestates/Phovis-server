@@ -37,6 +37,7 @@ const InsertSeedData = async () => {
     let contentinstance = transformInstance(ContentSeed, Content);
 
     await insertJoinColumn(taginstance, 'location', locationinsatance);
+    await insertJoinColumn(contentinstance, 'tag', taginstance);
     await insertJoinColumn(contentcardinstance, 'image', imageinstance, 'O');
     await insertJoinColumn(contentinstance, 'image', imageinstance, 'O');
     await insertJoinColumn(contentinstance, 'contentCard', contentcardinstance);

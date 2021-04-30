@@ -49,7 +49,6 @@ export class Content {
   image!: Image;
 
   @ManyToMany(() => Tag, {
-    cascade: ['insert', 'update'],
     nullable: true,
   })
   @JoinTable()
