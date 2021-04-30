@@ -11,11 +11,49 @@ import {
   kakaoTokenRes,
   kakaoUserRes,
 } from '@interface/index';
-import { stringify } from 'querystring';
 // TODO:
 // 1. google에서 password 어떻게 넣을지 생각해보기
-// 2.
 class authController {
+  public requestToken = async (req: Request, res: Response): Promise<void> => {
+    if (!req.cookies.refreshToken) {
+      res.status(403).send('not refresh token');
+    } else {
+      try {
+        const tokenResponse = jwt.verify(
+          req.cookies.refreshToken,
+          process.env.REFRESH_SECRET as string
+        ) as { id: string };
+        const user = await getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: tokenResponse.id })
+          .getOne();
+        if (user) {
+          const accessToken = jwt.sign(
+            { id: user.id },
+            process.env.ACCESS_SECRET as string,
+            { expiresIn: '1h' }
+          );
+          const refreshToken = jwt.sign(
+            { id: user.id },
+            process.env.REFRESH_SECRET as string,
+            { expiresIn: '10d' }
+          );
+          res
+            .status(200)
+            .cookie('refreshToken', refreshToken, {
+              maxAge: 864000,
+              secure: true,
+              sameSite: 'none',
+            })
+            .send({ accessToken });
+        } else {
+          res.status(403).send('invalid refresh token');
+        }
+      } catch (_e) {
+        res.status(403).send('expire');
+      }
+    }
+  };
   public login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body as loginReqeustBody;
     if (!email || !password) {
@@ -34,11 +72,19 @@ class authController {
       );
       const refreshToken = jwt.sign(
         { id: user.id },
-        process.env.REFRESH_SECRET as string
+        process.env.REFRESH_SECRET as string,
+        { expiresIn: '10d' }
       );
-      res.status(201).send({ accessToken, refreshToken });
+      res
+        .status(201)
+        .cookie('refreshToken', refreshToken, {
+          maxAge: 864000,
+          secure: true,
+          sameSite: 'none',
+        })
+        .send({ accessToken });
     } else {
-      res.status(404).send('not authorization');
+      res.status(404).send('not found user');
     }
   };
 
@@ -55,7 +101,13 @@ class authController {
         .insert()
         .into(User)
         .values([
-          { userName: userName || 'unkown', email, password, type: 'email' },
+          {
+            userName: userName || 'unkown',
+            email,
+            password,
+            imgUrl: 'e',
+            type: 'email',
+          },
         ])
         .execute();
       res.status(201).send('ok');
@@ -65,8 +117,6 @@ class authController {
   };
 
   public google = async (req: Request, res: Response): Promise<void> => {
-    // TODO:
-    // refresh token set cookie
     try {
       const { token } = req.body as googleOauthResponse;
       if (!token) res.status(403).send('fill token'); // 토큰을 안보내면
@@ -81,17 +131,24 @@ class authController {
         .getOne();
       if (user) {
         // 만약 기존에 있는 유저라면
-        const { id } = user;
         const accessToken = jwt.sign(
-          { id },
+          { id: user.id },
           process.env.ACCESS_SECRET as string,
           { expiresIn: '1h' }
         );
         const refreshToken = jwt.sign(
-          { id },
-          process.env.REFRESH_SECRET as string
+          { id: user.id },
+          process.env.REFRESH_SECRET as string,
+          { expiresIn: '10d' }
         );
-        res.status(201).send({ accessToken, refreshToken });
+        res
+          .status(201)
+          .cookie('refreshToken', refreshToken, {
+            maxAge: 864000,
+            secure: true,
+            sameSite: 'none',
+          })
+          .send({ accessToken });
       } else {
         // 기존에 없는 유저라면 새로 유저 등록
         const { identifiers } = await getRepository(User)
@@ -111,13 +168,22 @@ class authController {
         const { id } = identifiers[0] as User;
         const accessToken = jwt.sign(
           { id },
-          process.env.ACCESS_SECRET as string
+          process.env.ACCESS_SECRET as string,
+          { expiresIn: '1h' }
         );
         const refreshToken = jwt.sign(
           { id },
-          process.env.REFRESH_SECRET as string
+          process.env.REFRESH_SECRET as string,
+          { expiresIn: '10d' }
         );
-        res.status(201).send({ accessToken, refreshToken });
+        res
+          .status(201)
+          .cookie('refreshToken', refreshToken, {
+            maxAge: 864000,
+            secure: true,
+            sameSite: 'none',
+          })
+          .send({ accessToken });
       }
     } catch (error) {
       console.log(error);
@@ -126,91 +192,90 @@ class authController {
   };
 
   public kakao = async (req: Request, res: Response): Promise<void> => {
-    // TODO:
     // 이메일이 선택임 아무거나 넣어야 할수도 있음
-    // redirect url 배포시에 변경해야함
-    // refresh token set cookies
-    // 허가 url 추가 필요함 (카카오 설정 페이지에서)
-    try {
-      const { kakaoCode } = req.body;
-      if (!kakaoCode) {
-        res.status(404).send('bad request').end();
-      }
-      const kakaoTokenData = await axios.post<kakaoTokenRes>(
-        `https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id=${process.env.KAKAO_CLIENT_ID}&redirect_uri=http://localhost:3000/auth/kakao&code=${kakaoCode}&client_secret=${process.env.KAKAO_CLIENT_SECRET}`,
-        null,
-        {
-          headers: {
-            'content-type': 'application/x-www-form-urlencoded;charset=utf-8',
-          },
-        }
-      );
-
-      if (!kakaoTokenData || kakaoTokenData.data.error) {
-        res.status(403).send('Not authentication Kakao').end();
-      }
-
-      const { access_token } = kakaoTokenData.data;
-      const { data } = await axios.post<kakaoUserRes>(
-        'https://kapi.kakao.com/v2/user/me',
-        {
-          property_keys: ['kakao_account.profile', 'kakao_account.email'],
+    const { kakaoCode } = req.body;
+    if (kakaoCode) res.status(404).send('bad request');
+    const kakaoTokenData = await axios.post<kakaoTokenRes>(
+      'https://kauth.kakao.com/oauth/token',
+      {
+        grant_type: 'authorization_code',
+        client_id: process.env.KAKAO_CLIENT_ID as string,
+        redirect_uri: 'https//localhost:3000/auth/kakao',
+        code: kakaoCode,
+      },
+      { headers: { application: 'x-www-form-urlencoded;charset=utf-8' } }
+    );
+    if (!kakaoTokenData) res.status(403).send('Not authentication Kakao');
+    const { access_token } = kakaoTokenData.data;
+    const { data } = await axios.post<kakaoUserRes>(
+      'https://kapi.kakao.com/v2/user/me',
+      {
+        property_keys: ['kakao_account.profile', 'kakao_account.email'],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
-      );
-      const user = await getRepository(User)
-        .createQueryBuilder('user')
-        .where('user.id = :id', { id: `${data.id}` })
-        .getOne();
-
-      if (user) {
-        const { id } = user;
-        const accessToken = jwt.sign(
-          { id },
-          process.env.ACCESS_SECRET as string,
-          { expiresIn: '1h' }
-        );
-        const refreshToken = jwt.sign(
-          { id },
-          process.env.REFRESH_SECRET as string
-        );
-        res.status(200).send({ accessToken, refreshToken });
-      } else {
-        const { identifiers } = await getRepository(User)
-          .createQueryBuilder()
-          .insert()
-          .into(User)
-          .values([
-            {
-              id: `${data.id}`,
-              userName: data.kakao_account.profile.nickname,
-              email: data.kakao_account.email || '',
-              password: 'hashcrypto',
-              type: 'kakao',
-            },
-          ])
-          .execute();
-
-        const { id } = identifiers[0] as User;
-        const accessToken = jwt.sign(
-          { id },
-          process.env.ACCESS_SECRET as string,
-          { expiresIn: '1h' }
-        );
-
-        const refreshToken = jwt.sign(
-          { id },
-          process.env.REFRESH_SECRET as string
-        );
-        res.status(201).send({ accessToken, refreshToken });
       }
-    } catch (e) {
-      console.log(e);
-      throw e;
+    );
+    const user = await getRepository(User)
+      .createQueryBuilder('user')
+      .where('user.id = :id', { id: `${data.id}` })
+      .getOne();
+    if (user) {
+      const { id } = user;
+      const accessToken = jwt.sign(
+        { id },
+        process.env.ACCESS_SECRET as string,
+        { expiresIn: '1h' }
+      );
+      const refreshToken = jwt.sign(
+        { id },
+        process.env.REFRESH_SECRET as string,
+        { expiresIn: '10d' }
+      );
+      res
+        .status(200)
+        .cookie('refreshToken', refreshToken, {
+          maxAge: 864000,
+          secure: true,
+          sameSite: 'none',
+        })
+        .send({ accessToken, refreshToken });
+    } else {
+      const { identifiers } = await getRepository(User)
+        .createQueryBuilder()
+        .insert()
+        .into(User)
+        .values([
+          {
+            id: `${data.id}`,
+            userName: data.kakao_account.profile.nickname,
+            email: data.kakao_account.email || '',
+            password: 'hashcrypto',
+            type: 'kakao',
+          },
+        ])
+        .execute();
+      const { id } = identifiers[0] as User;
+      const accessToken = jwt.sign(
+        { id },
+        process.env.ACCESS_SECRET as string,
+        { expiresIn: '1h' }
+      );
+      const refreshToken = jwt.sign(
+        { id },
+        process.env.REFRESH_SECRET as string,
+        { expiresIn: '10d' }
+      );
+      res
+        .status(201)
+        .cookie('refreshToken', refreshToken, {
+          maxAge: 864000,
+          secure: true,
+          sameSite: 'none',
+        })
+        .send({ accessToken, refreshToken });
     }
   };
 }

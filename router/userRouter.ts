@@ -4,4 +4,6 @@ import express from 'express';
 
 const router = express.Router();
 
+router.get('/info', userController.getinfo);
+
 export default router;
