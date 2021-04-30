@@ -84,7 +84,7 @@ class authController {
         })
         .send({ accessToken });
     } else {
-      res.status(404).send('not authorization');
+      res.status(404).send('not found user');
     }
   };
 
