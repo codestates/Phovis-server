@@ -18,7 +18,7 @@ export class Imagecard {
   id!: string;
 
   @Column()
-  description!: string;
+  description?: string;
 
   @ManyToOne(() => User, (user) => user.imagecards)
   user!: User;
