@@ -124,8 +124,10 @@ class contentController {
         });
 
         for (let el of tagsid) {
-          await CreateRelation(Tag, 'location', el, locationid[0], 'M');
-          await CreateRelation(Content, 'tag', contentid[0], el, 'M');
+          if (el) {
+            await CreateRelation(Tag, 'location', el, locationid[0], 'M');
+            await CreateRelation(Content, 'tag', contentid[0], el, 'M');
+          }
         }
         type id = {
           id: string | number;
