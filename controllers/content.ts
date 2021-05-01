@@ -4,7 +4,7 @@ import { Content, ContentCard, Image, Location, Tag } from '@entity/index';
 import jwt from 'jsonwebtoken';
 import { content, JWT } from '../interface/index';
 import { insertdb, CreateRelation } from '../src/functionCollections';
-import { uploadToS3, deleteToS3 } from '../src/aws_sdk';
+import { uploadToS3 } from '../src/aws_sdk';
 
 class contentController {
   public post = async (req: Request, res: Response): Promise<void> => {
@@ -17,20 +17,20 @@ class contentController {
 
         const {
           title,
-          mainimageData,
           tags,
           description,
           location,
           images,
         }: content = req.body;
 
+        console.log(req.files, JSON.parse(req.body));
         // image bucket에 먼저 써주기
-        try {
-          const mainimageUrl = await uploadToS3(mainimageData);
-          console.log(mainimageUrl);
-        } catch (err) {
-          console.log(err);
-        }
+        // try {
+        //   const mainimageUrl = await uploadToS3();
+        //   console.log(mainimageUrl);
+        // } catch (err) {
+        //   console.log(err);
+        // }
 
         // const jointags = await getRepository(Tag)
         //   .createQueryBuilder('tag')

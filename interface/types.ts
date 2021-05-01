@@ -69,7 +69,6 @@ export interface kakaoUserRes {
 export interface content {
   imageid: number;
   title: string;
-  mainimageData: string;
   tags: string[];
   description: string;
   location: Location;
@@ -79,10 +78,12 @@ export interface content {
   potocards: photocard[];
 }
 
+export interface contentfile {}
+
 type Location = {
   location: string;
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
 };
 type User = {
   id: string;

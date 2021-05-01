@@ -25,6 +25,8 @@ function checkSSL(): boolean {
 app.use(middleware.cors);
 app.use(...middleware.express);
 
+app.use(express.static('public'));
+
 app.get('/', (req: express.Request, res: express.Response) => {
   res.send('Hello World');
 });
@@ -48,7 +50,6 @@ const server = checkSSL()
 createConnection()
   .then(() => {
     server.listen(port, () => {
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       console.log(`liveServer : ${liveServer}`);
       console.log(`middleware: ${Object.keys(middleware)}`);
       console.log(`https server on : ${port} port`);
