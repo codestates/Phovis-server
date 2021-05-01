@@ -1,3 +1,5 @@
+import { Base64EncodedString } from 'aws-sdk/clients/elastictranscoder';
+
 export interface loginReqeustBody {
   email: string | null;
   password: string | null;
@@ -67,7 +69,7 @@ export interface kakaoUserRes {
 export interface content {
   imageid: number;
   title: string;
-  mainimageuer: string;
+  mainimageData: string;
   tags: string[];
   description: string;
   location: Location;
@@ -88,6 +90,7 @@ type User = {
 };
 
 type Image = {
+  data: string;
   uri: string;
   description: string;
   type: string;
@@ -99,3 +102,7 @@ type photocard = {
   image: Image;
   message: string;
 };
+
+export interface JWT {
+  id: string;
+}

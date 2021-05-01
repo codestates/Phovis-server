@@ -14,7 +14,9 @@ export class Location {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   location!: string;
 
   @ManyToMany(() => Content, {

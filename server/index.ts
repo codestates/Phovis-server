@@ -2,7 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import 'reflect-metadata';
 
-import { authRouter, userRouter } from '../router';
+import { authRouter, userRouter, contentRouter } from '../router';
 import https from 'https';
 import * as middleware from '../middleware/index';
 import { createConnection } from 'typeorm';
@@ -32,6 +32,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
 // rotuer
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
+app.use('/content', contentRouter);
 
 let liveServer = checkSSL() ? 'https' : 'http';
 const server = checkSSL()
