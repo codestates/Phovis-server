@@ -31,5 +31,7 @@ Steps to run this project:
 - setup
 
 3. fill `ormconfig.json` database info
-4. `npx typeorm migration:run`
-5. `npm run start` run nodemon server
+4. `npm run generate`
+5. `npm run migration`
+6. `npm run seed` insert Seed Data
+7. `npm run start` run nodemon server

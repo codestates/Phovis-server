@@ -67,7 +67,7 @@ export interface kakaoUserRes {
 export interface content {
   imageid: number;
   title: string;
-  mainimageuer: string;
+  mainimageUrl: string;
   tags: string[];
   description: string;
   location: Location;
@@ -99,3 +99,7 @@ type photocard = {
   image: Image;
   message: string;
 };
+
+export interface JWT {
+  id: string;
+}
