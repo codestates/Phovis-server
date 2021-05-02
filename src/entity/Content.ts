@@ -15,6 +15,7 @@ import { Tag } from './Tag';
 import { Image } from './Image';
 import { ContentCard } from './Contentcard';
 import { User } from './User';
+import { Location } from './Location';
 
 @Entity()
 export class Content {
@@ -52,7 +53,10 @@ export class Content {
     nullable: true,
   })
   @JoinTable()
-  tag?: Tag[];
+  tag!: Tag[];
+
+  @ManyToMany(() => Location)
+  location!: Location[];
 
   @CreateDateColumn({
     type: 'timestamp',

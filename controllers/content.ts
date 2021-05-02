@@ -1,6 +1,13 @@
 import { Request, Response } from 'express';
 import { getRepository, ObjectLiteral } from 'typeorm';
-import { Content, ContentCard, Image, Location, Tag } from '@entity/index';
+import {
+  Content,
+  ContentCard,
+  Image,
+  Location,
+  Tag,
+  User,
+} from '@entity/index';
 import jwt from 'jsonwebtoken';
 import {
   content,
@@ -9,9 +16,11 @@ import {
   ConvertImg,
   Locationtype,
   Imagetype,
+  resultContent,
 } from '../interface/index';
 import { insertdb, CreateRelation } from '../src/functionCollections';
 import { uploadToS3 } from '../src/aws_sdk';
+import { isRegExp } from 'node:util';
 
 class contentController {
   public post = async (req: Request, res: Response): Promise<void> => {
@@ -135,6 +144,14 @@ class contentController {
           'O'
         );
 
+        await CreateRelation(
+          Location,
+          'content',
+          locationid[0],
+          contentid[0],
+          'M'
+        );
+
         await CreateRelation(Content, 'user', contentid[0], id, 'O');
         const tagsid = jointags.map((el) => {
           return el.id;
@@ -186,19 +203,22 @@ class contentController {
         // 보내줘야할 객체 생성하기
         if (result && contantcards) {
           contantcards = contantcards.map((el) => {
-            const { id, image, ...rest } = el;
-            return { ...rest, uri: image.uri, contentCardId: id };
+            const { image, ...rest } = el;
+            return { ...rest, uri: image.uri };
           }) as any[];
-          const { id, user, image, ...rest } = result as any;
-          let { tag: itag } = tag[0] as any;
-          itag = itag.map((el: Tag) => el.tagName);
+          const { user, image, ...rest } = result as any;
+          let itag: any[];
+          if (tag.length !== 0) {
+            let { tag: tags } = tag[0] as any;
+            console.log(tags);
+            itag = tags.map((el: Tag) => el.tagName);
+            rest.tag = [...itag];
+          }
           result = {
             ...rest,
-            contentId: id,
             userName: user.userName,
             mainimageUrl: image.uri,
             contentCard: contantcards,
-            tag: [...itag],
             location: locations,
           };
         }
@@ -213,129 +233,185 @@ class contentController {
     }
   };
 
-  public get = async (req: Request, res: Response): Promise<void> => {};
-  // console.log(req.params);
-  // if (req.params.id) {
-  //   const contentid = req.params.id;
+  public get = async (req: Request, res: Response): Promise<void> => {
+    console.log(req.query.id);
+    if (req.query.id) {
+      const contentid = req.query.id;
 
-  //   let result = await getRepository(Content)
-  //     .createQueryBuilder('content')
-  //     .select(['content.title', 'content.description'])
-  //     .addSelect('user.userName')
-  //     .addSelect('image.uri')
-  //     .innerJoin('content.user', 'user')
-  //     .innerJoin('content.image', 'image')
-  //     .where('content.id = :id', { id: contentid })
-  //     .getOne();
+      let result = await getRepository(Content)
+        .createQueryBuilder('content')
+        .select(['content.id', 'content.title', 'content.description'])
+        .addSelect(['user.id', 'user.userName'])
+        .addSelect('image.uri')
+        .innerJoin('content.user', 'user')
+        .innerJoin('content.image', 'image')
+        .where('content.id = :id', { id: contentid })
+        .getOne();
 
-  //   let contantcards = await getRepository(ContentCard)
-  //     .createQueryBuilder('contentCard')
-  //     .select('contentCard.description')
-  //     .addSelect('image.uri')
-  //     .leftJoin('contentCard.image', 'image')
-  //     .where('contentCard.content = :id', { id: contentid })
-  //     .getMany();
+      let contantcards = await getRepository(ContentCard)
+        .createQueryBuilder('contentCard')
+        .select(['contentCard.id', 'contentCard.description'])
+        .addSelect('image.uri')
+        .leftJoin('contentCard.image', 'image')
+        .where('contentCard.content = :id', { id: contentid })
+        .getMany();
 
-  //   let tag = await getRepository(Content)
-  //     .createQueryBuilder('content')
-  //     .select('')
-  //     .addSelect('tag.tagName')
-  //     .innerJoin('content.tag', 'tag')
-  //     .where('content.id = :id', { id: contentid })
-  //     .getMany();
+      let tag = await getRepository(Content)
+        .createQueryBuilder('content')
+        .select('')
+        .addSelect('tag.tagName')
+        .innerJoin('content.tag', 'tag')
+        .where('content.id = :id', { id: contentid })
+        .getMany();
 
-  //   let locations = await getRepository(Location)
-  //     .createQueryBuilder('location')
-  //     .select(['location.location', 'location.lat', 'location.lng'])
-  //     .leftJoin('location.content', 'content')
-  //     .where('location.id = :id', { id: contentid })
-  //     .getOne();
+      let locations = await getRepository(Location)
+        .createQueryBuilder('location')
+        .select(['location.location', 'location.lat', 'location.lng'])
+        .leftJoin('location.content', 'content')
+        .where('location.id = :id', { id: contentid })
+        .getOne();
 
-  //   // 보내줘야할 객체 생성하기
-  //   if (result && contantcards) {
-  //     contantcards = contantcards.map((el) => {
-  //       const { image, ...rest } = el;
-  //       return { ...rest, uri: image.uri };
-  //     }) as any[];
-  //     const { user, image, ...rest } = result as any;
-  //     let { tag: itag } = tag[0] as any;
-  //     itag = itag.map((el: Tag) => el.tagName);
-  //     result = {
-  //       ...rest,
-  //       userName: user.userName,
-  //       mainimageUrl: image.uri,
-  //       contentCard: contantcards,
-  //       tag: [...itag],
-  //       location: locations,
-  //     };
-  //   }
+      // 보내줘야할 객체 생성하기
+      if (result && contantcards) {
+        contantcards = contantcards.map((el) => {
+          const { image, ...rest } = el;
+          return { ...rest, uri: image.uri };
+        }) as any[];
+        const { user, image, ...rest } = result as any;
+        let itag: any[];
+        if (tag.length !== 0) {
+          let { tag: tags } = tag[0] as any;
+          itag = tags.map((el: Tag) => el.tagName);
+          rest.tag = [...itag];
+        }
+        result = {
+          ...rest,
+          userName: user.userName,
+          mainimageUrl: image.uri,
+          contentCard: contantcards,
+          location: locations,
+        };
+      }
 
-  //   res.status(200).send({ result });
-  // } else if (req.params.tag) {
-  //   const tags = req.params.tag;
+      res.status(200).send({ result });
+    } else if (req.query.tag) {
+      const tag = req.query.tag as string;
+      const tags = tag.split(',');
+      const limit = Number(req.query.maxnum) || 1;
+      let result = (await getRepository(Content)
+        .createQueryBuilder('content')
+        .select([
+          'content.id',
+          'content.title',
+          'content.description',
+          'content.id',
+        ])
+        .addSelect(['user.userName', 'user.id'])
+        .addSelect('image.uri')
+        .addSelect(['contentCard.description', 'contentCard.id'])
+        .innerJoinAndSelect(
+          'content.tag',
+          'tag',
+          'tag.tagName In (:...tagName)',
+          { tagName: tags }
+        )
+        .innerJoin('content.user', 'user')
+        .innerJoin('content.image', 'image')
+        .innerJoin('content.contentCard', 'contentCard')
+        .where('tag.tagName IN (:...tagName)', { tagName: tags })
+        .limit(limit as number)
+        .getMany()) as any;
 
-  //   const jointags = await getRepository(Tag)
-  //     .createQueryBuilder('tag')
-  //     .where('tag.tagName IN (:...tagName)', { tagName: tags })
-  //     .getMany();
+      for (let i = 0; i < result.length; i++) {
+        for (let j = 0; j < result[i].contentCard.length; j++) {
+          const tempContentCard = (await getRepository(ContentCard)
+            .createQueryBuilder('contentCard')
+            .select(['contentCard.description', 'contentCard.id'])
+            .addSelect('image.uri')
+            .leftJoin('contentCard.image', 'image')
+            .where('contentCard.id = :id', {
+              id: result[i].contentCard[j].id,
+            })
+            .getOne()) as any;
 
-  //   let result = await getRepository(Content)
-  //     .createQueryBuilder('content')
-  //     .select(['content.title', 'content.description'])
-  //     .addSelect('user.userName')
-  //     .addSelect('image.uri')
-  //     .innerJoin('content.user', 'user')
-  //     .innerJoin('content.image', 'image')
-  //     .where('content.tag IN (:...tag)', { tag: jointags })
-  //     .getOne();
+          let locations = await getRepository(Location)
+            .createQueryBuilder('location')
+            .select(['location.location', 'location.lat', 'location.lng'])
+            .leftJoinAndSelect(
+              'location.content',
+              'content',
+              'content.id = :id',
+              { id: result[i].id }
+            )
+            .getOne();
 
-  //   console.log(result);
+          let likes = (await getRepository(User)
+            .createQueryBuilder('user')
+            .innerJoinAndSelect('user.content', 'content', 'content.id = :id', {
+              id: result[i].id,
+            })
+            .loadRelationCountAndMap('user.favouriteCount', 'user.favourite')
+            .getOne()) as any;
 
-  // let contantcards = await getRepository(ContentCard)
-  //   .createQueryBuilder('contentCard')
-  //   .select('contentCard.description')
-  //   .addSelect('image.uri')
-  //   .leftJoin('contentCard.image', 'image')
-  //   .where('contentCard.content = :id', { id: contentid })
-  //   .getMany();
+          if (tempContentCard && locations && locations) {
+            const { image, ...rest1 } = tempContentCard;
+            result[i].contentCard[j] = {
+              ...rest1,
+              uri: image.uri,
+            };
+            const { content, ...rest2 } = locations;
+            result[i].location = rest2;
 
-  // let tag = await getRepository(Content)
-  //   .createQueryBuilder('content')
-  //   .select('')
-  //   .addSelect('tag.tagName')
-  //   .innerJoin('content.tag', 'tag')
-  //   .where('content.id = :id', { id: contentid })
-  //   .getMany();
+            const { favouriteCount } = likes;
+            result[i].likes = favouriteCount;
+          }
+        }
+        if (result[i].tag.length !== 0) {
+          for (let j = 0; j < result[i].tag.length; j++) {
+            if (result[i].tag[j]) {
+              const { tagName, ...rest } = result[i].tag[j];
+              if (tagName) result[i].tag[j] = tagName as resultContent;
+            }
+          }
+        }
+        const { contentCard, image, ...rest } = result[i];
+        result[i] = {
+          ...rest,
+          mainimageUrl: image.uri,
+          images: contentCard,
+        } as resultContent;
+      }
+      console.log(result);
+      // let tag = await getRepository(Content)
+      //   .createQueryBuilder('content')
+      //   .select('')
+      //   .addSelect('tag.tagName')
+      //   .innerJoin('content.tag', 'tag')
+      //   .where('content.id = :id', { id: contentid })
+      //   .getMany();
 
-  // let locations = await getRepository(Location)
-  //   .createQueryBuilder('location')
-  //   .select(['location.location', 'location.lat', 'location.lng'])
-  //   .leftJoin('location.content', 'content')
-  //   .where('location.id = :id', { id: contentid })
-  //   .getOne();
-
-  // // 보내줘야할 객체 생성하기
-  // if (result && contantcards) {
-  //   contantcards = contantcards.map((el) => {
-  //     const { image, ...rest } = el;
-  //     return { ...rest, uri: image.uri };
-  //   }) as any[];
-  //   const { user, image, ...rest } = result as any;
-  //   let { tag: itag } = tag[0] as any;
-  //   itag = itag.map((el: Tag) => el.tagName);
-  //   result = {
-  //     ...rest,
-  //     userName: user.userName,
-  //     mainimageUrl: image.uri,
-  //     contentCard: contantcards,
-  //     tag: [...itag],
-  //     location: locations,
-  //   };
-  // }
-  //   } else if (req.params.name) {
-  //   } else if (req.params.filter && req.params.userId) {
-  //   }
-  // };
+      // 보내줘야할 객체 생성하기
+      // if (result && contantcards) {
+      //   contantcards = contantcards.map((el) => {
+      //     const { image, ...rest } = el;
+      //     return { ...rest, uri: image.uri };
+      //   }) as any[];
+      //   const { user, image, ...rest } = result as any;
+      //   let { tag: itag } = tag[0] as any;
+      //   itag = itag.map((el: Tag) => el.tagName);
+      //   result = {
+      //     ...rest,
+      //     userName: user.userName,
+      //     mainimageUrl: image.uri,
+      //     contentCard: contantcards,
+      //     tag: [...itag],
+      //     location: locations,
+      //   };
+      // }
+      res.status(201).send({ maxnum: limit, data: result });
+    } else if (req.query.filter && req.query.userId) {
+    }
+  };
 }
 
 export default new contentController();

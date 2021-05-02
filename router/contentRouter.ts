@@ -8,7 +8,7 @@ const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 const cpUpload = upload.fields([
   { name: 'title' },
-  { name: 'mainImageData' },
+  { name: 'mainimagefile' },
   { name: 'tags' },
   { name: 'description' },
   { name: 'location' },

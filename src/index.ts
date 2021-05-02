@@ -50,6 +50,7 @@ const InsertSeedData = async () => {
       locationinsatance,
       'O'
     );
+    await insertJoinColumn(locationinsatance, 'content', contentinstance);
     await insertJoinColumn(imagecardinstance, 'image', imageinstance, 'O');
     await insertJoinColumn(userinstance, 'content', contentinstance);
     await insertJoinColumn(userinstance, 'imagecards', imagecardinstance);
