@@ -26,6 +26,44 @@ class userController {
       }
     }
   };
+
+  public updateInfo = async (req: Request, res: Response): Promise<void> => {
+    const { checkedId } = req;
+    if (!checkedId) {
+      res.status(403).send('not authorize');
+    } else {
+      try {
+        const { userName, img } = req.body;
+        if (!userName && !img) {
+          res
+            .status(400)
+            .send({ message: 'fill body data (userName or img)' })
+            .end();
+        }
+        // img 처리 과정
+        userName &&
+          (await getRepository(User)
+            .createQueryBuilder()
+            .update({
+              userName,
+            })
+            .where('user.id = :id', { id: checkedId })
+            .execute());
+        img &&
+          (await getRepository(User)
+            .createQueryBuilder()
+            .update({
+              imgUrl: img,
+            })
+            .where('user.id = :id', { id: checkedId })
+            .execute());
+        res.status(200).send({ message: 'ok' });
+      } catch (e) {
+        res.status(403).send({ message: 'input error' });
+        throw e;
+      }
+    }
+  };
 }
 
 export default new userController();

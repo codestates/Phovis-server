@@ -19,7 +19,9 @@ export class ContentCard {
   @Column()
   description!: string;
 
-  @OneToOne(() => Image)
+  @OneToOne(() => Image, {
+    cascade: ['insert', 'update'],
+  })
   @JoinColumn()
   image!: Image;
 
