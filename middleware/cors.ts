@@ -8,7 +8,6 @@ const corsOption: cors.CorsOptions = {
   ], // origin front web server
   methods: ['POST', 'GET', 'OPTIONS'],
   credentials: true,
-  allowedHeaders: ['Content-Type'],
 };
 
 export default cors(corsOption);

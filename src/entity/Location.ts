@@ -19,6 +19,16 @@ export class Location {
   })
   location!: string;
 
+  @Column({
+    nullable: true,
+  })
+  lat!: number;
+
+  @Column({
+    nullable: true,
+  })
+  lng!: number;
+
   @ManyToMany(() => Content, {
     cascade: ['insert', 'update'],
     nullable: true,
