@@ -19,7 +19,8 @@
     "paths": {
       "@config": ["config/index.ts"],
       "@interface/*": ["interface/*"],
-      "@entity/*": ["src/entity/*"]
+      "@entity/*": ["src/entity/*"],
+      "@middleware/*": ["middleware/*"]
     }
   },
   "include": ["**/*.ts"],

@@ -4,14 +4,16 @@ import 'reflect-metadata';
 
 import { authRouter, userRouter } from '../router';
 import https from 'https';
-import * as middleware from '../middleware/index';
+import middleware from '../middleware/index';
 import { createConnection } from 'typeorm';
 import '@config';
 
-type port = string;
+type port = number | string;
+type env = 'production' | 'develope';
 
 const app = express();
-const port = process.env.DEPLOY_PORT || 4000;
+const env: env = (process.env.NODE_ENV as 'production' | null) || 'develope';
+const port: port = process.env.DEPLOY_PORT || 4000;
 type liveServer = 'https' | 'http' | undefined;
 
 function checkSSL(): boolean {
@@ -22,8 +24,7 @@ function checkSSL(): boolean {
 }
 
 // middleware
-app.use(middleware.cors);
-app.use(...middleware.express);
+app.use(...middleware[env]);
 
 app.get('/', (req: express.Request, res: express.Response) => {
   res.send('Hello World');
@@ -33,7 +34,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
 
-let liveServer = checkSSL() ? 'https' : 'http';
+let liveServer: liveServer = checkSSL() ? 'https' : 'http';
 const server = checkSSL()
   ? https.createServer(
       {
@@ -49,7 +50,7 @@ createConnection()
     server.listen(port, () => {
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       console.log(`liveServer : ${liveServer}`);
-      console.log(`middleware: ${Object.keys(middleware)}`);
+      console.log(`middleware: ${env}`);
       console.log(`https server on : ${port} port`);
     });
   })
