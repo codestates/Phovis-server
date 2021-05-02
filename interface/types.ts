@@ -126,6 +126,7 @@ export interface resultContent {
   user: User;
   mainimageUrl: string;
   contentCard: contentCardType[];
+  location: Locationtype;
 }
 
 type contentCardType = {
