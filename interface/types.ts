@@ -1,5 +1,3 @@
-import { Base64EncodedString } from 'aws-sdk/clients/elastictranscoder';
-
 export interface loginReqeustBody {
   email: string | null;
   password: string | null;

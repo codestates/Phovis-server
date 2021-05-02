@@ -31,11 +31,14 @@ class contentController {
         }: content = req.body;
         console.log(images);
         const { images: imageData } = req.files as contentfile;
+
+        // json 데이터 변환
         const convetTags = JSON.parse(tags) as string[];
         const convertLocation = JSON.parse(location) as Locationtype;
         const convertImages = images.map((el) => {
           return JSON.parse(el) as Imagetype;
         });
+
         // image bucket에 먼저 써주기
         let imagesUrls: ConvertImg[] = [];
         if (imageData) {
@@ -68,6 +71,7 @@ class contentController {
           });
         }
 
+        // db에 해당 데이터 넣는 과정
         const { identifiers: mainimageid } = await insertdb(Image, {
           uri: imagesUrls[0].uri,
           type: 'content',
@@ -84,7 +88,7 @@ class contentController {
           title,
           description,
         });
-        console.log(convertImages);
+
         convertImages.forEach(async (el, idx) => {
           try {
             let { identifiers: contentcard } = await insertdb(ContentCard, {
@@ -103,7 +107,7 @@ class contentController {
                 image = identifiers;
               }
             }
-
+            // 관계 설정과정
             await CreateRelation(
               ContentCard,
               'image',
@@ -137,8 +141,10 @@ class contentController {
         });
 
         for (let el of tagsid) {
-          await CreateRelation(Tag, 'location', el, locationid[0], 'M');
-          await CreateRelation(Content, 'tag', contentid[0], el, 'M');
+          if (el) {
+            await CreateRelation(Tag, 'location', el, locationid[0], 'M');
+            await CreateRelation(Content, 'tag', contentid[0], el, 'M');
+          }
         }
         type id = {
           id: string | number;

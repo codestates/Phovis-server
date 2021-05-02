@@ -1,11 +1,16 @@
 import express from 'express';
 import fs from 'fs';
 import 'reflect-metadata';
+<<<<<<< HEAD
 
 import { authRouter, contentRouter, userRouter } from '../router';
+=======
+import { User } from '@entity/index';
+import { authRouter, contentRouter } from '../router';
+>>>>>>> 84a7091ffd0df4c01426cb83aa119cb686de418a
 import https from 'https';
 import * as middleware from '../middleware/index';
-import { createConnection } from 'typeorm';
+import { createConnection, getRepository } from 'typeorm';
 import '@config';
 
 type port = string;
@@ -25,13 +30,18 @@ function checkSSL(): boolean {
 app.use(middleware.cors);
 app.use(...middleware.express);
 
-app.get('/', (req: express.Request, res: express.Response) => {
-  res.send('Hello World');
+app.get('/', async (req: express.Request, res: express.Response) => {
+  try {
+    res.send('Hello World');
+  } catch (err) {
+    console.log(err);
+  }
 });
 
-// rotuer
+// router
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
+
 app.use('/content', contentRouter);
 
 let liveServer = checkSSL() ? 'https' : 'http';
