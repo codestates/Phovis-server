@@ -152,8 +152,8 @@ class contentController {
 
         let result = await getRepository(Content)
           .createQueryBuilder('content')
-          .select(['content.title', 'content.description'])
-          .addSelect('user.userName')
+          .select(['content.id', 'content.title', 'content.description'])
+          .addSelect(['user.id', 'user.userName'])
           .addSelect('image.uri')
           .innerJoin('content.user', 'user')
           .innerJoin('content.image', 'image')
@@ -162,7 +162,7 @@ class contentController {
 
         let contantcards = await getRepository(ContentCard)
           .createQueryBuilder('contentCard')
-          .select('contentCard.description')
+          .select(['contentCard.id', 'contentCard.description'])
           .addSelect('image.uri')
           .leftJoin('contentCard.image', 'image')
           .where('contentCard.content = :id', { id: contentid[0].id })
@@ -186,14 +186,15 @@ class contentController {
         // 보내줘야할 객체 생성하기
         if (result && contantcards) {
           contantcards = contantcards.map((el) => {
-            const { image, ...rest } = el;
-            return { ...rest, uri: image.uri };
+            const { id, image, ...rest } = el;
+            return { ...rest, uri: image.uri, contentCardId: id };
           }) as any[];
-          const { user, image, ...rest } = result as any;
+          const { id, user, image, ...rest } = result as any;
           let { tag: itag } = tag[0] as any;
           itag = itag.map((el: Tag) => el.tagName);
           result = {
             ...rest,
+            contentId: id,
             userName: user.userName,
             mainimageUrl: image.uri,
             contentCard: contantcards,
