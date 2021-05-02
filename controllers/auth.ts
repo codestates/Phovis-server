@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import { getRepository } from 'typeorm';
-import jwt from 'jsonwebtoken';
-import { User } from '@entity/index';
+import crypto from 'crypto';
+import cryptoPW from '@middleware/service/customCrypto';
+import { signToken } from '@middleware/service/tokenController';
+import { User } from '@entity/User';
 import {
   loginReqeustBody,
   signupRequestBody,
@@ -14,30 +16,63 @@ import {
 // TODO:
 // 1. google에서 password 어떻게 넣을지 생각해보기
 class authController {
+  public checkPW = async (req: Request, res: Response): Promise<void> => {
+    const { password } = req.body;
+    if (!req.checkedId || password) {
+      res.status(403).send({ message: 'not authorize' });
+    } else {
+      const encodedPW = cryptoPW(password, req.checkedId);
+      const user = await getRepository(User)
+        .createQueryBuilder('user')
+        .where('user.password = :password', { password: encodedPW })
+        .getOne();
+      if (user) {
+        const token = crypto.randomBytes(64).toString();
+        req.session.token = token;
+        res.status(200).send({ key: token });
+      } else {
+        res.status(403).send('wrong password');
+      }
+    }
+  };
+  public updatePW = async (req: Request, res: Response): Promise<void> => {
+    if (!req.checkedId) {
+      res.status(403).send({ message: 'not authorize' }).end();
+    }
+    if (!req.session) {
+      res.status(400).send({ message: 'bad Request (not session)' }).end();
+    }
+    const { key } = req.body;
+    if (!key) {
+      res.status(400).send('bad Request "not key"').end();
+    }
+    if (key === req.session.token) {
+      const { newPassword } = req.body;
+      const { checkedId } = req;
+      const endcodePW = cryptoPW(newPassword, checkedId as string);
+      await getRepository(User)
+        .createQueryBuilder()
+        .update({
+          password: endcodePW,
+        })
+        .where('id = :id', { id: checkedId })
+        .execute();
+      res.status(203).send({ message: 'Update finish' });
+    }
+  };
   public requestToken = async (req: Request, res: Response): Promise<void> => {
     if (!req.cookies.refreshToken) {
       res.status(403).send('not refresh token');
     } else {
       try {
-        const tokenResponse = jwt.verify(
-          req.cookies.refreshToken,
-          process.env.REFRESH_SECRET as string
-        ) as { id: string };
+        const { checkedId } = req;
+        if (!checkedId) res.status(403).send('not authorized').end();
         const user = await getRepository(User)
           .createQueryBuilder('user')
-          .where('user.id = :id', { id: tokenResponse.id })
+          .where('user.id = :id', { id: checkedId })
           .getOne();
         if (user) {
-          const accessToken = jwt.sign(
-            { id: user.id },
-            process.env.ACCESS_SECRET as string,
-            { expiresIn: '1h' }
-          );
-          const refreshToken = jwt.sign(
-            { id: user.id },
-            process.env.REFRESH_SECRET as string,
-            { expiresIn: '10d' }
-          );
+          const { accessToken, refreshToken } = signToken(user.id);
           res
             .status(200)
             .cookie('refreshToken', refreshToken, {
@@ -71,16 +106,7 @@ class authController {
       console.log(err);
     }
     if (user) {
-      const accessToken = jwt.sign(
-        { id: user.id },
-        process.env.ACCESS_SECRET as string,
-        { expiresIn: '1h' }
-      );
-      const refreshToken = jwt.sign(
-        { id: user.id },
-        process.env.REFRESH_SECRET as string,
-        { expiresIn: '10d' }
-      );
+      const { accessToken, refreshToken } = signToken(user.id);
       res
         .status(201)
         .cookie('refreshToken', refreshToken, {
@@ -102,7 +128,7 @@ class authController {
       .where('user.email = :email', { email })
       .getOne();
     if (!user) {
-      await getRepository(User)
+      const { identifiers } = await getRepository(User)
         .createQueryBuilder()
         .insert()
         .into(User)
@@ -110,11 +136,20 @@ class authController {
           {
             userName: userName || 'unkown',
             email,
-            password,
+            password: '',
             imgUrl: 'e',
             type: 'email',
           },
         ])
+        .execute();
+      const { id } = identifiers[0];
+      const encodePW = cryptoPW(password, id);
+      await getRepository(User)
+        .createQueryBuilder()
+        .update({
+          password: encodePW,
+        })
+        .where('user.id = :id', { id: id })
         .execute();
       res.status(201).send('ok');
     } else {
@@ -137,16 +172,7 @@ class authController {
         .getOne();
       if (user) {
         // 만약 기존에 있는 유저라면
-        const accessToken = jwt.sign(
-          { id: user.id },
-          process.env.ACCESS_SECRET as string,
-          { expiresIn: '1h' }
-        );
-        const refreshToken = jwt.sign(
-          { id: user.id },
-          process.env.REFRESH_SECRET as string,
-          { expiresIn: '10d' }
-        );
+        const { accessToken, refreshToken } = signToken(user.id);
         res
           .status(201)
           .cookie('refreshToken', refreshToken, {
@@ -157,6 +183,7 @@ class authController {
           .send({ accessToken });
       } else {
         // 기존에 없는 유저라면 새로 유저 등록
+        const customPW = crypto.randomBytes(64).toString();
         const { identifiers } = await getRepository(User)
           .createQueryBuilder()
           .insert()
@@ -166,22 +193,13 @@ class authController {
               id: data.sub,
               userName: data.name,
               email: data.email,
-              password: 'hashcrypto',
+              password: customPW,
               type: 'google',
             },
           ])
           .execute();
         const { id } = identifiers[0] as User;
-        const accessToken = jwt.sign(
-          { id },
-          process.env.ACCESS_SECRET as string,
-          { expiresIn: '1h' }
-        );
-        const refreshToken = jwt.sign(
-          { id },
-          process.env.REFRESH_SECRET as string,
-          { expiresIn: '10d' }
-        );
+        const { accessToken, refreshToken } = signToken(id);
         res
           .status(201)
           .cookie('refreshToken', refreshToken, {
@@ -229,17 +247,7 @@ class authController {
       .where('user.id = :id', { id: `${data.id}` })
       .getOne();
     if (user) {
-      const { id } = user;
-      const accessToken = jwt.sign(
-        { id },
-        process.env.ACCESS_SECRET as string,
-        { expiresIn: '1h' }
-      );
-      const refreshToken = jwt.sign(
-        { id },
-        process.env.REFRESH_SECRET as string,
-        { expiresIn: '10d' }
-      );
+      const { accessToken, refreshToken } = signToken(user.id);
       res
         .status(200)
         .cookie('refreshToken', refreshToken, {
@@ -247,8 +255,9 @@ class authController {
           secure: true,
           sameSite: 'none',
         })
-        .send({ accessToken, refreshToken });
+        .send({ accessToken });
     } else {
+      const customPW = crypto.randomBytes(64).toString();
       const { identifiers } = await getRepository(User)
         .createQueryBuilder()
         .insert()
@@ -258,22 +267,13 @@ class authController {
             id: `${data.id}`,
             userName: data.kakao_account.profile.nickname,
             email: data.kakao_account.email || '',
-            password: 'hashcrypto',
+            password: customPW,
             type: 'kakao',
           },
         ])
         .execute();
       const { id } = identifiers[0] as User;
-      const accessToken = jwt.sign(
-        { id },
-        process.env.ACCESS_SECRET as string,
-        { expiresIn: '1h' }
-      );
-      const refreshToken = jwt.sign(
-        { id },
-        process.env.REFRESH_SECRET as string,
-        { expiresIn: '10d' }
-      );
+      const { accessToken, refreshToken } = signToken(id);
       res
         .status(201)
         .cookie('refreshToken', refreshToken, {
@@ -281,7 +281,7 @@ class authController {
           secure: true,
           sameSite: 'none',
         })
-        .send({ accessToken, refreshToken });
+        .send({ accessToken });
     }
   };
 }
