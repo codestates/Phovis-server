@@ -15,7 +15,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
-    "types": [],
+    "types": ["node"],
     "paths": {
       "@config": ["config/index.ts"],
       "@interface/*": ["interface/*"],

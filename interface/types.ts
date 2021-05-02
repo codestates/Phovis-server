@@ -67,36 +67,49 @@ export interface kakaoUserRes {
 export interface content {
   imageid: number;
   title: string;
-  mainimageUrl: string;
-  tags: string[];
+  tags: string;
   description: string;
-  location: Location;
+  location: string;
   user: User;
   like: number;
-  images: Image[];
+  images: string[];
   potocards: photocard[];
 }
 
-type Location = {
+export interface contentfile {
+  images?: Express.Multer.File[];
+  tmpimages?: ConvertImg;
+}
+
+export type ConvertImg = {
+  name: string;
+  uri: string;
+};
+
+type images = {
+  description: string;
+  image: File;
+};
+
+export type Locationtype = {
   location: string;
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
 };
 type User = {
   id: string;
   userName: string;
 };
 
-type Image = {
-  uri: string;
+export type Imagetype = {
+  name: string;
   description: string;
-  type: string;
 };
 
 type photocard = {
   userid: User;
   userName: User;
-  image: Image;
+  image: images;
   message: string;
 };
 

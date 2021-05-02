@@ -1,8 +1,7 @@
 import express from 'express';
 import fs from 'fs';
 import 'reflect-metadata';
-import { User } from '@entity/index';
-import { authRouter, contentRouter } from '../router';
+import { authRouter, contentRouter, userRouter } from '../router';
 import https from 'https';
 import middleware from '../middleware/index';
 import { createConnection } from 'typeorm';
@@ -36,7 +35,7 @@ app.get('/', async (req: express.Request, res: express.Response) => {
 
 // router
 app.use('/auth', authRouter);
-// app.use('/user', userRouter);
+app.use('/user', userRouter);
 
 app.use('/content', contentRouter);
 

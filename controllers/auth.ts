@@ -94,11 +94,17 @@ class authController {
     if (!email || !password) {
       res.status(404).send('bad request');
     }
-    const user = await getRepository(User)
-      .createQueryBuilder('user')
-      .where('user.email = :email', { email })
-      .andWhere('user.password = :password', { password })
-      .getOne();
+    let user;
+    try {
+      const usertmp = await getRepository(User)
+        .createQueryBuilder('user')
+        .where('user.email = :email', { email })
+        .andWhere('user.password = :password', { password })
+        .getOne();
+      user = usertmp;
+    } catch (err) {
+      console.log(err);
+    }
     if (user) {
       const { accessToken, refreshToken } = signToken(user.id);
       res
