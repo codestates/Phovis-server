@@ -7,6 +7,7 @@ import {
   ConvertImg,
   Locationtype,
   Imagetype,
+  resultContent,
 } from '../interface/index';
 import { insertdb, CreateRelation } from '../src/functionCollections';
 import { uploadToS3 } from '../src/aws_sdk';
@@ -370,7 +371,7 @@ class contentController {
           .limit(limit)
           .getMany()) as any;
       }
-      result = await CreateResult(result);
+      result = (await CreateResult(result)) as Promise<resultContent>[];
       res.status(200).send(result);
     }
   };
