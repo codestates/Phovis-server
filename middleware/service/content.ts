@@ -53,12 +53,12 @@ export async function CreateResult(result: any[]) {
       }
     }
     const { contentCard, image, ...rest } = result[i];
-    const { id, userName } = result[i].user;
+    const { id, userName, imgUrl } = result[i].user;
     result[i] = {
       ...rest,
       mainimageUrl: image.uri,
       images: contentCard,
-      user: { id, userName },
+      user: { id, userName, profileImg: imgUrl },
     } as resultContent;
   }
   return result as Promise<resultContent>[];
