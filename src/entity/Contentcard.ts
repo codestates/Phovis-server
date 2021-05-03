@@ -25,7 +25,9 @@ export class ContentCard {
   @JoinColumn()
   image!: Image;
 
-  @ManyToOne(() => Content, (content) => content.contentCard)
+  @ManyToOne(() => Content, (content) => content.contentCard, {
+    onDelete: 'CASCADE',
+  })
   content!: Content;
 
   @CreateDateColumn({

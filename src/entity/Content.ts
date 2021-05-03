@@ -39,7 +39,9 @@ export class Content {
   @ManyToMany(() => User)
   favourite!: User[];
 
-  @OneToMany(() => ContentCard, (contentcard) => contentcard.content)
+  @OneToMany(() => ContentCard, (contentcard) => contentcard.content, {
+    cascade: true,
+  })
   contentCard!: ContentCard[];
 
   @OneToOne(() => Image, {
