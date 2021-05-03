@@ -188,15 +188,16 @@ class contentController {
           itag = tags.map((el: Tag) => el.tagName);
           rest.tag = [...itag];
         }
+
         result = {
           ...rest,
           user: {
             userName: user.userName,
             id: user.id,
-            pofileImg: user.imgUrl,
+            profileImg: user.imgUrl,
           },
           mainimageUrl: image.uri,
-          contentCard: contantcards,
+          images: contantcards,
           location: locations,
         };
       }
@@ -265,16 +266,17 @@ class contentController {
             itag = tags.map((el: Tag) => el.tagName);
             rest.tag = [...itag];
           }
+          const { content, ...locationinfo } = locations as Location;
           result = {
             ...rest,
             user: {
               userName: user.userName,
               id: user.id,
-              pofileImg: user.imgUrl,
+              profileImg: user.imgUrl,
             },
             mainimageUrl: image.uri,
-            contentCard: contantcards,
-            location: locations,
+            images: contantcards,
+            location: locationinfo,
           };
         }
 
