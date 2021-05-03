@@ -52,14 +52,17 @@ export async function CreateResult(result: any[]) {
         }
       }
     }
+
     const { contentCard, image, ...rest } = result[i];
     const { id, userName, imgUrl } = result[i].user;
+    console.log(imgUrl);
     result[i] = {
       ...rest,
       mainimageUrl: image.uri,
       images: contentCard,
       user: { id, userName, profileImg: imgUrl },
     } as resultContent;
+
+    return result as Promise<resultContent>[];
   }
-  return result as Promise<resultContent>[];
 }
