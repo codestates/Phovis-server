@@ -21,11 +21,17 @@ router.post('/', function (req: Request, res: Response, next) {
     if (err) {
       console.log(err);
     } else {
-      next(auth);
+      next();
     }
   });
 });
+
 router.post('/', contentController.post);
+
 router.get('/', contentController.get);
+
+router.put('/', cpUpload, contentController.put);
+
+router.delete('/', contentController.delete);
 
 export default router;
