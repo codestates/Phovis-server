@@ -19,7 +19,7 @@ class contentController {
       const id = req.checkedId;
 
       const { title, tags, description, location, images }: content = req.body;
-      console.log(images);
+
       const { images: imageData } = req.files as contentfile;
 
       // json 데이터 변환
@@ -47,7 +47,6 @@ class contentController {
         .getMany();
 
       // tags에 담겨전달 받는 모든 tag 정보가 db에 있는지 확인
-      console.log(convetTags);
       if (convetTags.length !== jointags.length) {
         convetTags.forEach(async (NeedTag) => {
           const existTags = jointags.map((existTag) => existTag.tagName);
@@ -133,9 +132,6 @@ class contentController {
           await CreateRelation(Content, 'tag', contentid[0], el, 'M');
         }
       }
-      type id = {
-        id: string | number;
-      };
 
       let result = await getRepository(Content)
         .createQueryBuilder('content')
@@ -290,7 +286,7 @@ class contentController {
       let result = (await getRepository(Content)
         .createQueryBuilder('content')
         .select(['content.id', 'content.title', 'content.description'])
-        .addSelect(['user.userName', 'user.id'])
+        .addSelect(['user.userName', 'user.id', 'user.imgUrl'])
         .addSelect('image.uri')
         .addSelect(['contentCard.description', 'contentCard.id'])
         .innerJoinAndSelect(
