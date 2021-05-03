@@ -15,7 +15,6 @@ export const verifyToken = (
     };
     return id;
   } catch (e) {
-    console.log('here', e.message);
     throw 'not authorize';
   }
 };

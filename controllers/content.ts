@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { getConnection, getRepository, ObjectLiteral } from 'typeorm';
+import { getRepository, ObjectLiteral } from 'typeorm';
 import { Content, ContentCard, Image, Location, Tag } from '@entity/index';
-import jwt from 'jsonwebtoken';
 import {
   content,
   contentfile,
@@ -12,7 +11,6 @@ import {
 import { insertdb, CreateRelation } from '../src/functionCollections';
 import { uploadToS3, deleteToS3 } from '../middleware/service/aws_sdk';
 import { CreateResult } from '../middleware/service/content';
-import { use } from 'chai';
 
 class contentController {
   public post = async (req: Request, res: Response): Promise<void> => {
