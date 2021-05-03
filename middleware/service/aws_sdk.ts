@@ -18,12 +18,6 @@ export const uploadToS3 = async (
   data: Express.Multer.File
 ): Promise<string> => {
   try {
-    // const res = await bucket
-    //   .listObjects({
-    //     Bucket: BUCKET,
-    //   })
-    //   .promise();
-
     const tempFileName = data.originalname.split('.');
     const fileExtension = tempFileName[tempFileName.length - 1];
     const name = uuidv4();
@@ -45,17 +39,19 @@ export const uploadToS3 = async (
   }
 };
 
-// export const deleteToS3 = async (name: string): Promise<boolean> => {
-//   try {
-//     await bucket
-//       .deleteObject({
-//         Bucket: BUCKET,
-//         Key: name,
-//       })
-//       .promise();
-//     return true;
-//   } catch (err) {
-//     console.log(err);
-//     return false;
-//   }
-// };
+export const deleteToS3 = async (name: string): Promise<boolean> => {
+  try {
+    const target = name.split('.');
+
+    await bucket
+      .deleteObject({
+        Bucket: BUCKET,
+        Key: target[target.length - 2] + '.' + target[target.length - 1],
+      })
+      .promise();
+    return true;
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+};

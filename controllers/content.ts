@@ -1,25 +1,18 @@
 import { Request, Response } from 'express';
 import { getConnection, getRepository, ObjectLiteral } from 'typeorm';
-import {
-  Content,
-  ContentCard,
-  Image,
-  Location,
-  Tag,
-  User,
-} from '@entity/index';
+import { Content, ContentCard, Image, Location, Tag } from '@entity/index';
 import jwt from 'jsonwebtoken';
 import {
   content,
   contentfile,
-  JWT,
   ConvertImg,
   Locationtype,
   Imagetype,
 } from '../interface/index';
 import { insertdb, CreateRelation } from '../src/functionCollections';
-import { uploadToS3 } from '../src/aws_sdk';
+import { uploadToS3, deleteToS3 } from '../middleware/service/aws_sdk';
 import { CreateResult } from '../middleware/service/content';
+import { use } from 'chai';
 
 class contentController {
   public post = async (req: Request, res: Response): Promise<void> => {
@@ -143,14 +136,11 @@ class contentController {
           await CreateRelation(Content, 'tag', contentid[0], el, 'M');
         }
       }
-      type id = {
-        id: string | number;
-      };
 
       let result = await getRepository(Content)
         .createQueryBuilder('content')
         .select(['content.id', 'content.title', 'content.description'])
-        .addSelect(['user.id', 'user.userName'])
+        .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
         .addSelect('image.uri')
         .innerJoin('content.user', 'user')
         .innerJoin('content.image', 'image')
@@ -196,7 +186,11 @@ class contentController {
         }
         result = {
           ...rest,
-          userName: user.userName,
+          user: {
+            userName: user.userName,
+            id: user.id,
+            pofileImg: user.imgUrl,
+          },
           mainimageUrl: image.uri,
           contentCard: contantcards,
           location: locations,
@@ -218,12 +212,14 @@ class contentController {
         let result = await getRepository(Content)
           .createQueryBuilder('content')
           .select(['content.id', 'content.title', 'content.description'])
-          .addSelect(['user.id', 'user.userName'])
+          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
           .addSelect('image.uri')
           .innerJoin('content.user', 'user')
           .innerJoin('content.image', 'image')
           .where('content.id = :id', { id: contentid })
           .getOne();
+
+        if (!result) res.status(400).send({ message: 'Bad request' }).end();
 
         let contantcards = await getRepository(ContentCard)
           .createQueryBuilder('contentCard')
@@ -269,17 +265,21 @@ class contentController {
           }
           result = {
             ...rest,
-            userName: user.userName,
+            user: {
+              userName: user.userName,
+              id: user.id,
+              pofileImg: user.imgUrl,
+            },
             mainimageUrl: image.uri,
             contentCard: contantcards,
             location: locations,
           };
         }
 
-        res.status(200).send({ result });
+        res.status(200).send({ result }).end();
       } catch (err) {
         console.log(err);
-        res.status(400).send({ message: 'Bad Request' });
+        res.status(400).send({ message: 'Bad Request' }).end();
       }
     } else if (req.query.tag) {
       const tag = req.query.tag as string;
@@ -288,7 +288,7 @@ class contentController {
       let result = (await getRepository(Content)
         .createQueryBuilder('content')
         .select(['content.id', 'content.title', 'content.description'])
-        .addSelect(['user.userName', 'user.id'])
+        .addSelect(['user.userName', 'user.id', 'user.imgUrl'])
         .addSelect('image.uri')
         .addSelect(['contentCard.description', 'contentCard.id'])
         .innerJoinAndSelect(
@@ -303,8 +303,7 @@ class contentController {
         .limit(limit as number)
         .getMany()) as any;
 
-      result = CreateResult(result);
-
+      result = await CreateResult(result);
       res.status(200).send({ maxnum: limit, data: result });
     } else if (req.query.filter || req.query.userId) {
       let result = [];
@@ -314,7 +313,7 @@ class contentController {
           .select(['content.id', 'content.title', 'content.description'])
           .addSelect(['image.uri', 'image.id'])
           .addSelect(['contentCard.description', 'contentCard.id'])
-          .addSelect(['user.id', 'user.userName'])
+          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
           .innerJoinAndSelect('content.user', 'user', 'user.id = :id', {
             id: req.query.userId,
           })
@@ -329,7 +328,7 @@ class contentController {
           .select(['content.id', 'content.title', 'content.description'])
           .addSelect(['image.uri', 'image.id'])
           .addSelect(['contentCard.description', 'contentCard.id'])
-          .addSelect(['user.id', 'user.userName'])
+          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
           .innerJoinAndSelect('content.user', 'user')
           .innerJoinAndSelect(
             'user.bookmark',
@@ -350,7 +349,7 @@ class contentController {
           .select(['content.id', 'content.title', 'content.description'])
           .addSelect(['image.uri', 'image.id'])
           .addSelect(['contentCard.description', 'contentCard.id'])
-          .addSelect(['user.id', 'user.userName'])
+          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
           .innerJoinAndSelect('content.user', 'user')
           .innerJoinAndSelect(
             'user.favourite',
@@ -366,8 +365,9 @@ class contentController {
           .limit(limit)
           .getMany()) as any;
       }
-      result = await CreateResult(result);
-      res.status(200).send(result);
+      if (!result) res.status(400).send({ message: 'Bad Request' }).end();
+      result = (await CreateResult(result)) as any[];
+      res.status(200).send(result).end();
     }
   };
 
@@ -387,9 +387,14 @@ class contentController {
         // json 데이터 변환
         const convetTags = JSON.parse(tags) as string[];
         const convertLocation = JSON.parse(location) as Locationtype;
-        const convertImages = images.map((el) => {
-          return JSON.parse(el) as Imagetype;
-        });
+        let convertImages = [];
+        if (Array.isArray(images)) {
+          convertImages = images.map((el) => {
+            return JSON.parse(el) as Imagetype;
+          });
+        } else {
+          convertImages.push(JSON.parse(images));
+        }
 
         // image bucket에 먼저 써주기
         let imagesUrls: ConvertImg[] = [];
@@ -409,7 +414,7 @@ class contentController {
           .getMany();
 
         // tags에 담겨전달 받는 모든 tag 정보가 db에 있는지 확인
-        console.log(convetTags);
+
         if (convetTags.length !== jointags.length) {
           convetTags.forEach(async (NeedTag) => {
             const existTags = jointags.map((existTag) => existTag.tagName);
@@ -455,7 +460,6 @@ class contentController {
                   uri: imagesUrls[idx].uri,
                   type: 'content',
                 });
-                console.log(identifiers);
                 image = identifiers;
               }
             }
@@ -507,14 +511,11 @@ class contentController {
             await CreateRelation(Content, 'tag', contentid[0], el, 'M');
           }
         }
-        type id = {
-          id: string | number;
-        };
 
         let result = await getRepository(Content)
           .createQueryBuilder('content')
           .select(['content.id', 'content.title', 'content.description'])
-          .addSelect(['user.id', 'user.userName'])
+          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
           .addSelect('image.uri')
           .innerJoin('content.user', 'user')
           .innerJoin('content.image', 'image')
@@ -554,40 +555,78 @@ class contentController {
           let itag: any[];
           if (tag.length !== 0) {
             let { tag: tags } = tag[0] as any;
-            console.log(tags);
             itag = tags.map((el: Tag) => el.tagName);
             rest.tag = [...itag];
           }
           result = {
             ...rest,
-            userName: user.userName,
+            user: {
+              userName: user.userName,
+              id: user.id,
+              pofileImg: user.imgUrl,
+            },
             mainimageUrl: image.uri,
             contentCard: contantcards,
             location: locations,
           };
         }
 
-        await getConnection()
+        const uris = await getRepository(ContentCard)
+          .createQueryBuilder('contentCard')
+          .select('contentCard.id')
+          .addSelect('image.uri')
+          .innerJoin('contentCard.image', 'image')
+          .where('contentCard.contentId = :id', { id: req.query.contentid })
+          .getMany();
+
+        for (let idx = 0; idx < uris.length; idx++) {
+          deleteToS3(uris[idx].image.uri);
+        }
+
+        await getRepository(Content)
           .createQueryBuilder()
           .delete()
           .from(Content)
-          .where('content.id = :id', { id: req.query.contentid });
+          .where('id = :id', { id: req.query.contentid })
+          .execute();
 
-        res.status(201).send({ ...result });
+        res
+          .status(201)
+          .send({ ...result })
+          .end();
       } catch (err) {
-        res.status(400).send({ message: 'Bad request' });
+        console.log(err);
+        res.status(400).send({ message: 'Bad request' }).end();
       }
     } else {
-      res.status(400).send({ message: 'Bad request' });
+      res.status(400).send({ message: 'Bad request' }).end();
     }
   };
 
   public delete = async (req: Request, res: Response) => {
-    await getConnection()
-      .createQueryBuilder()
-      .delete()
-      .from(Content)
-      .where('content.id = :id', { id: req.query.contentid });
+    try {
+      const uris = await getRepository(ContentCard)
+        .createQueryBuilder('contentCard')
+        .select('contentCard.id')
+        .addSelect('image.uri')
+        .innerJoin('contentCard.image', 'image')
+        .where('contentCard.contentId = :id', { id: req.query.contentid })
+        .getMany();
+
+      for (let idx = 0; idx < uris.length; idx++) {
+        deleteToS3(uris[idx].image.uri);
+      }
+
+      await getRepository(Content)
+        .createQueryBuilder()
+        .delete()
+        .from(Content)
+        .where('id = :id', { id: req.query.contentid })
+        .execute();
+    } catch (err) {
+      res.status(400).send({ message: 'Bad Request' });
+    }
+    res.status(205).send({ message: 'ok' });
   };
 }
 
