@@ -65,7 +65,7 @@ class authController {
   // 엑세스 토큰 재요청
   public requestToken = async (req: Request, res: Response): Promise<void> => {
     if (!req.cookies.refreshToken) {
-      res.status(403).send('not refresh token');
+      res.status(401).send('not refresh token');
     } else {
       try {
         const { checkedId } = req;
@@ -88,7 +88,7 @@ class authController {
           res.status(403).send('invalid refresh token');
         }
       } catch (_e) {
-        res.status(403).send('expire');
+        res.status(401).send('expire');
       }
     }
   };

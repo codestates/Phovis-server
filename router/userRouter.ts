@@ -5,5 +5,6 @@ import express from 'express';
 const router = express.Router();
 router.get('/info', userController.getinfo);
 router.put('/info', userController.updateInfo);
+router.put('/like', userController.likeContent);
 
 export default router;
