@@ -32,4 +32,6 @@ router.get('/', contentController.get);
 
 router.put('/', cpUpload, contentController.put);
 
+router.delete('/', contentController.delete);
+
 export default router;
