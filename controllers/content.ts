@@ -7,6 +7,7 @@ import {
   ConvertImg,
   Locationtype,
   Imagetype,
+  resultContent,
 } from '../interface/index';
 import { insertdb, CreateRelation } from '../src/functionCollections';
 import { uploadToS3, deleteToS3 } from '../middleware/service/aws_sdk';
@@ -145,7 +146,7 @@ class contentController {
         .where('content.id = :id', { id: contentid[0].id })
         .getOne();
 
-      let contantcards = await getRepository(ContentCard)
+      let contentCards = await getRepository(ContentCard)
         .createQueryBuilder('contentCard')
         .select(['contentCard.id', 'contentCard.description'])
         .addSelect('image.uri')
@@ -169,8 +170,8 @@ class contentController {
         .getOne();
 
       // 보내줘야할 객체 생성하기
-      if (result && contantcards) {
-        contantcards = contantcards.map((el) => {
+      if (result && contentCards) {
+        contentCards = contentCards.map((el) => {
           const { image, ...rest } = el;
           return { ...rest, uri: image.uri };
         }) as any[];
@@ -182,15 +183,16 @@ class contentController {
           itag = tags.map((el: Tag) => el.tagName);
           rest.tag = [...itag];
         }
+
         result = {
           ...rest,
           user: {
             userName: user.userName,
             id: user.id,
-            pofileImg: user.imgUrl,
+            profileImg: user.imgUrl,
           },
           mainimageUrl: image.uri,
-          contentCard: contantcards,
+          images: contentCards,
           location: locations,
         };
       }
@@ -219,7 +221,7 @@ class contentController {
 
         if (!result) res.status(400).send({ message: 'Bad request' }).end();
 
-        let contantcards = await getRepository(ContentCard)
+        let contentCards = await getRepository(ContentCard)
           .createQueryBuilder('contentCard')
           .select(['contentCard.id', 'contentCard.description'])
           .addSelect('image.uri')
@@ -249,8 +251,8 @@ class contentController {
           .getOne();
 
         // 보내줘야할 객체 생성하기
-        if (result && contantcards) {
-          contantcards = contantcards.map((el) => {
+        if (result && contentCards) {
+          contentCards = contentCards.map((el) => {
             const { image, ...rest } = el;
             return { ...rest, uri: image.uri };
           }) as any[];
@@ -261,16 +263,17 @@ class contentController {
             itag = tags.map((el: Tag) => el.tagName);
             rest.tag = [...itag];
           }
+          const { content, ...locationinfo } = locations as Location;
           result = {
             ...rest,
             user: {
               userName: user.userName,
               id: user.id,
-              pofileImg: user.imgUrl,
+              profileImg: user.imgUrl,
             },
             mainimageUrl: image.uri,
-            contentCard: contantcards,
-            location: locations,
+            images: contentCards,
+            location: locationinfo,
           };
         }
 
@@ -364,7 +367,7 @@ class contentController {
           .getMany()) as any;
       }
       if (!result) res.status(400).send({ message: 'Bad Request' }).end();
-      result = (await CreateResult(result)) as any[];
+      result = (await CreateResult(result)) as Promise<resultContent>[];
       res.status(200).send(result).end();
     }
   };
@@ -520,7 +523,7 @@ class contentController {
           .where('content.id = :id', { id: contentid[0].id })
           .getOne();
 
-        let contantcards = await getRepository(ContentCard)
+        let contentCards = await getRepository(ContentCard)
           .createQueryBuilder('contentCard')
           .select(['contentCard.id', 'contentCard.description'])
           .addSelect('image.uri')
@@ -544,8 +547,8 @@ class contentController {
           .getOne();
 
         // 보내줘야할 객체 생성하기
-        if (result && contantcards) {
-          contantcards = contantcards.map((el) => {
+        if (result && contentCards) {
+          contentCards = contentCards.map((el) => {
             const { image, ...rest } = el;
             return { ...rest, uri: image.uri };
           }) as any[];
@@ -561,10 +564,10 @@ class contentController {
             user: {
               userName: user.userName,
               id: user.id,
-              pofileImg: user.imgUrl,
+              profileImg: user.imgUrl,
             },
             mainimageUrl: image.uri,
-            contentCard: contantcards,
+            images: contentCards,
             location: locations,
           };
         }

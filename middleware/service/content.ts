@@ -52,6 +52,7 @@ export async function CreateResult(result: any[]) {
         }
       }
     }
+
     const { contentCard, image, ...rest } = result[i];
     const { id, userName, imgUrl } = result[i].user;
     console.log(imgUrl);
