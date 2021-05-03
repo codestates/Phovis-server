@@ -146,7 +146,7 @@ class contentController {
         .where('content.id = :id', { id: contentid[0].id })
         .getOne();
 
-      let contantcards = await getRepository(ContentCard)
+      let contentCards = await getRepository(ContentCard)
         .createQueryBuilder('contentCard')
         .select(['contentCard.id', 'contentCard.description'])
         .addSelect('image.uri')
@@ -170,8 +170,8 @@ class contentController {
         .getOne();
 
       // 보내줘야할 객체 생성하기
-      if (result && contantcards) {
-        contantcards = contantcards.map((el) => {
+      if (result && contentCards) {
+        contentCards = contentCards.map((el) => {
           const { image, ...rest } = el;
           return { ...rest, uri: image.uri };
         }) as any[];
@@ -192,7 +192,7 @@ class contentController {
             profileImg: user.imgUrl,
           },
           mainimageUrl: image.uri,
-          images: contantcards,
+          images: contentCards,
           location: locations,
         };
       }
@@ -221,7 +221,7 @@ class contentController {
 
         if (!result) res.status(400).send({ message: 'Bad request' }).end();
 
-        let contantcards = await getRepository(ContentCard)
+        let contentCards = await getRepository(ContentCard)
           .createQueryBuilder('contentCard')
           .select(['contentCard.id', 'contentCard.description'])
           .addSelect('image.uri')
@@ -251,8 +251,8 @@ class contentController {
           .getOne();
 
         // 보내줘야할 객체 생성하기
-        if (result && contantcards) {
-          contantcards = contantcards.map((el) => {
+        if (result && contentCards) {
+          contentCards = contentCards.map((el) => {
             const { image, ...rest } = el;
             return { ...rest, uri: image.uri };
           }) as any[];
@@ -272,7 +272,7 @@ class contentController {
               profileImg: user.imgUrl,
             },
             mainimageUrl: image.uri,
-            images: contantcards,
+            images: contentCards,
             location: locationinfo,
           };
         }
@@ -523,7 +523,7 @@ class contentController {
           .where('content.id = :id', { id: contentid[0].id })
           .getOne();
 
-        let contantcards = await getRepository(ContentCard)
+        let contentCards = await getRepository(ContentCard)
           .createQueryBuilder('contentCard')
           .select(['contentCard.id', 'contentCard.description'])
           .addSelect('image.uri')
@@ -547,8 +547,8 @@ class contentController {
           .getOne();
 
         // 보내줘야할 객체 생성하기
-        if (result && contantcards) {
-          contantcards = contantcards.map((el) => {
+        if (result && contentCards) {
+          contentCards = contentCards.map((el) => {
             const { image, ...rest } = el;
             return { ...rest, uri: image.uri };
           }) as any[];
@@ -567,7 +567,7 @@ class contentController {
               profileImg: user.imgUrl,
             },
             mainimageUrl: image.uri,
-            images: contantcards,
+            images: contentCards,
             location: locations,
           };
         }
