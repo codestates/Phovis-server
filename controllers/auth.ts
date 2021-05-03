@@ -16,6 +16,7 @@ import {
 // TODO:
 // 1. google에서 password 어떻게 넣을지 생각해보기
 class authController {
+  // 비밀번호 확인
   public checkPW = async (req: Request, res: Response): Promise<void> => {
     const { password } = req.body;
     if (!req.checkedId || password) {
@@ -35,6 +36,7 @@ class authController {
       }
     }
   };
+  // 비밀번호 업데이트
   public updatePW = async (req: Request, res: Response): Promise<void> => {
     if (!req.checkedId) {
       res.status(403).send({ message: 'not authorize' }).end();
@@ -60,6 +62,7 @@ class authController {
       res.status(203).send({ message: 'Update finish' });
     }
   };
+  // 엑세스 토큰 재요청
   public requestToken = async (req: Request, res: Response): Promise<void> => {
     if (!req.cookies.refreshToken) {
       res.status(403).send('not refresh token');
@@ -89,23 +92,18 @@ class authController {
       }
     }
   };
+  // 로그인
   public login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body as loginReqeustBody;
     if (!email || !password) {
       res.status(404).send('bad request');
     }
-    let user;
-    try {
-      const usertmp = await getRepository(User)
-        .createQueryBuilder('user')
-        .where('user.email = :email', { email })
-        .andWhere('user.password = :password', { password })
-        .getOne();
-      user = usertmp;
-    } catch (err) {
-      console.log(err);
-    }
-    if (user) {
+    const user = await getRepository(User)
+      .createQueryBuilder('user')
+      .where('user.email = :email', { email })
+      .getOne();
+    const decodedPW = user && cryptoPW(password as string, user.id);
+    if (user && decodedPW === user.password) {
       const { accessToken, refreshToken } = signToken(user.id);
       res
         .status(201)
@@ -119,7 +117,7 @@ class authController {
       res.status(404).send('not found user');
     }
   };
-
+  // 회원가입
   public signup = async (req: Request, res: Response): Promise<void> => {
     const { userName, email, password } = req.body as signupRequestBody;
     if (!email || !password) res.status(403).send('not enough prams');
@@ -156,7 +154,7 @@ class authController {
       res.status(404).send('valid email');
     }
   };
-
+  // 구글 회원가입
   public google = async (req: Request, res: Response): Promise<void> => {
     try {
       const { token } = req.body as googleOauthResponse;
@@ -192,6 +190,7 @@ class authController {
             {
               id: data.sub,
               userName: data.name,
+              imgUrl: data.picture,
               email: data.email,
               password: customPW,
               type: 'google',
@@ -214,7 +213,7 @@ class authController {
       res.status(404).send(error);
     }
   };
-
+  // 카카오 회원가입
   public kakao = async (req: Request, res: Response): Promise<void> => {
     // 이메일이 선택임 아무거나 넣어야 할수도 있음
     const { kakaoCode } = req.body;
@@ -266,6 +265,7 @@ class authController {
           {
             id: `${data.id}`,
             userName: data.kakao_account.profile.nickname,
+            imgUrl: data.kakao_account.profile.profile_image_url,
             email: data.kakao_account.email || '',
             password: customPW,
             type: 'kakao',
