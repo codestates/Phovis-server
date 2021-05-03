@@ -1,5 +1,4 @@
 import { sign, verify } from 'jsonwebtoken';
-import '@config';
 
 export const verifyToken = (
   token: string,
@@ -20,7 +19,6 @@ export const verifyToken = (
 };
 
 export const signToken = (id: string) => {
-  console.log(process.env.ACCESS_SECRET);
   const accessToken = sign({ id: id }, process.env.ACCESS_SECRET as string, {
     expiresIn: '1h',
   });
