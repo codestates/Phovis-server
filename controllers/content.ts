@@ -278,10 +278,10 @@ class contentController {
           };
         }
 
-        res.status(200).send({ result });
+        res.status(200).send({ result }).end();
       } catch (err) {
         console.log(err);
-        res.status(400).send({ message: 'Bad Request' });
+        res.status(400).send({ message: 'Bad Request' }).end();
       }
     } else if (req.query.tag) {
       const tag = req.query.tag as string;
@@ -305,7 +305,7 @@ class contentController {
         .limit(limit as number)
         .getMany()) as any;
 
-      result = CreateResult(result);
+      result = await CreateResult(result);
 
       res.status(200).send({ maxnum: limit, data: result });
     } else if (req.query.filter || req.query.userId) {
@@ -331,7 +331,7 @@ class contentController {
           .select(['content.id', 'content.title', 'content.description'])
           .addSelect(['image.uri', 'image.id'])
           .addSelect(['contentCard.description', 'contentCard.id'])
-          .addSelect(['user.id', 'user.userName'])
+          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
           .innerJoinAndSelect('content.user', 'user')
           .innerJoinAndSelect(
             'user.bookmark',
@@ -352,7 +352,7 @@ class contentController {
           .select(['content.id', 'content.title', 'content.description'])
           .addSelect(['image.uri', 'image.id'])
           .addSelect(['contentCard.description', 'contentCard.id'])
-          .addSelect(['user.id', 'user.userName'])
+          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
           .innerJoinAndSelect('content.user', 'user')
           .innerJoinAndSelect(
             'user.favourite',
