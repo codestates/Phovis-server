@@ -80,6 +80,7 @@ export interface content {
 
 export interface contentfile {
   images?: Express.Multer.File[];
+  image?: Express.Multer.File;
   tmpimages?: ConvertImg;
 }
 
