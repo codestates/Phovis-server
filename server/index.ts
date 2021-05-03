@@ -1,7 +1,6 @@
 import express from 'express';
 import fs from 'fs';
 import 'reflect-metadata';
-import { User } from '@entity/index';
 import { authRouter, contentRouter } from '../router';
 import https from 'https';
 import middleware from '../middleware/index';
@@ -27,6 +26,7 @@ function checkSSL(): boolean {
 app.use(...middleware[env]);
 
 app.get('/', async (req: express.Request, res: express.Response) => {
+  // route 53 health check
   try {
     res.send('Hello World');
   } catch (err) {
