@@ -1,3 +1,5 @@
+import { stringTo2048 } from 'aws-sdk/clients/customerprofiles';
+
 export interface loginReqeustBody {
   email: string | null;
   password: string | null;
@@ -116,3 +118,19 @@ type photocard = {
 export interface JWT {
   id: string;
 }
+
+export interface resultContent {
+  title: string;
+  description: string;
+  tag: string[];
+  user: User;
+  mainimageUrl: string;
+  contentCard: contentCardType[];
+  location: Locationtype;
+}
+
+type contentCardType = {
+  id: string;
+  description: string;
+  uri: string;
+};

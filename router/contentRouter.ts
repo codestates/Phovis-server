@@ -2,13 +2,14 @@
 import { contentController } from '../controllers';
 import express, { Request, Response } from 'express';
 import multer from 'multer';
+import * as auth from '../middleware/service/authorize';
 
 const router = express.Router();
 
 const upload = multer({ storage: multer.memoryStorage() });
 const cpUpload = upload.fields([
   { name: 'title' },
-  { name: 'mainImageData' },
+  { name: 'mainimagefile' },
   { name: 'tags' },
   { name: 'description' },
   { name: 'location' },
@@ -20,13 +21,11 @@ router.post('/', function (req: Request, res: Response, next) {
     if (err) {
       console.log(err);
     } else {
-      next();
+      next(auth);
     }
   });
 });
-
 router.post('/', contentController.post);
-
 router.get('/', contentController.get);
 
 export default router;
