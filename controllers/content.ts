@@ -625,6 +625,7 @@ class contentController {
     } catch (err) {
       res.status(400).send({ message: 'Bad Request' });
     }
+    res.status(205).send({ message: 'ok' });
   };
 }
 
