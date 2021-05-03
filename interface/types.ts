@@ -80,6 +80,7 @@ export interface content {
 
 export interface contentfile {
   images?: Express.Multer.File[];
+  image?: Express.Multer.File[];
   tmpimages?: ConvertImg;
 }
 
@@ -134,3 +135,12 @@ type contentCardType = {
   description: string;
   uri: string;
 };
+
+export interface photocardres {
+  photocardId: string;
+  imageId: number;
+  url: string;
+  description: string;
+  location: Location;
+  tags: string[]
+}

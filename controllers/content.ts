@@ -9,7 +9,7 @@ import {
   Imagetype,
   resultContent,
 } from '../interface/index';
-import { insertdb, CreateRelation } from '../src/functionCollections';
+import { insertdb, CreateRelation } from '../src/DBfunctionCollections';
 import { uploadToS3, deleteToS3 } from '../middleware/service/aws_sdk';
 import { CreateResult } from '../middleware/service/content';
 
@@ -17,8 +17,9 @@ class contentController {
   public post = async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.checkedId;
-      console.log(id);
+
       const { title, tags, description, location, images }: content = req.body;
+
       const { images: imageData } = req.files as contentfile;
 
       // json 데이터 변환
@@ -78,40 +79,36 @@ class contentController {
       });
 
       convertImages.forEach(async (el, idx) => {
-        try {
-          let { identifiers: contentcard } = await insertdb(ContentCard, {
-            description: el.description,
-          });
+        let { identifiers: contentcard } = await insertdb(ContentCard, {
+          description: el.description,
+        });
 
-          let image: ObjectLiteral[];
-          for (let i = 0; i < imagesUrls.length; i++) {
-            // image name과 파일의 name 비교하여 데이터 추가
-            if (imagesUrls[i].name === el.name) {
-              let { identifiers } = await insertdb(Image, {
-                uri: imagesUrls[idx].uri,
-                type: 'content',
-              });
-              image = identifiers;
-            }
+        let image: ObjectLiteral[];
+        for (let i = 0; i < imagesUrls.length; i++) {
+          // image name과 파일의 name 비교하여 데이터 추가
+          if (imagesUrls[i].name === el.name) {
+            let { identifiers } = await insertdb(Image, {
+              uri: imagesUrls[idx].uri,
+              type: 'content',
+            });
+            image = identifiers;
           }
-          // 관계 설정과정
-          await CreateRelation(
-            ContentCard,
-            'image',
-            contentcard[0],
-            image![0],
-            'O'
-          );
-          await CreateRelation(
-            Content,
-            'contentCard',
-            contentid[0],
-            contentcard[0],
-            'M'
-          );
-        } catch (err) {
-          console.log(err);
         }
+        // 관계 설정과정
+        await CreateRelation(
+          ContentCard,
+          'image',
+          contentcard[0],
+          image![0],
+          'O'
+        );
+        await CreateRelation(
+          Content,
+          'contentCard',
+          contentid[0],
+          contentcard[0],
+          'M'
+        );
       });
 
       await CreateRelation(Content, 'image', contentid[0], mainimageid[0], 'O');
@@ -305,6 +302,7 @@ class contentController {
         .getMany()) as any;
 
       result = await CreateResult(result);
+
       res.status(200).send({ maxnum: limit, data: result });
     } else if (req.query.filter || req.query.userId) {
       let result = [];

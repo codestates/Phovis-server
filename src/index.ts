@@ -2,7 +2,7 @@ import {
   makeRelation,
   insertJoinColumn,
   transformInstance,
-} from './functionCollections';
+} from './DBfunctionCollections';
 import { Group } from './relations';
 import { getRepository, createConnection, getConnection } from 'typeorm';
 import {
