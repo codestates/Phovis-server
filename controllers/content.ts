@@ -92,7 +92,6 @@ class contentController {
               uri: imagesUrls[idx].uri,
               type: 'content',
             });
-            console.log(identifiers);
             image = identifiers;
           }
         }
