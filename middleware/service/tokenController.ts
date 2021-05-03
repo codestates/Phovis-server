@@ -1,4 +1,5 @@
 import { sign, verify } from 'jsonwebtoken';
+import '@config';
 
 export const verifyToken = (
   token: string,
@@ -14,12 +15,13 @@ export const verifyToken = (
     };
     return id;
   } catch (e) {
-    console.log(e.message);
+    console.log('here', e.message);
     throw 'not authorize';
   }
 };
 
 export const signToken = (id: string) => {
+  console.log(process.env.ACCESS_SECRET);
   const accessToken = sign({ id: id }, process.env.ACCESS_SECRET as string, {
     expiresIn: '1h',
   });
