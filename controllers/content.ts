@@ -1,18 +1,9 @@
 import { Request, Response } from 'express';
 import { getRepository, ObjectLiteral } from 'typeorm';
-import {
-  Content,
-  ContentCard,
-  Image,
-  Location,
-  Tag,
-  User,
-} from '@entity/index';
-import jwt from 'jsonwebtoken';
+import { Content, ContentCard, Image, Location, Tag } from '@entity/index';
 import {
   content,
   contentfile,
-  JWT,
   ConvertImg,
   Locationtype,
   Imagetype,
@@ -153,7 +144,7 @@ class contentController {
       let result = await getRepository(Content)
         .createQueryBuilder('content')
         .select(['content.id', 'content.title', 'content.description'])
-        .addSelect(['user.id', 'user.userName'])
+        .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
         .addSelect('image.uri')
         .innerJoin('content.user', 'user')
         .innerJoin('content.image', 'image')
@@ -199,7 +190,11 @@ class contentController {
         }
         result = {
           ...rest,
-          userName: user.userName,
+          user: {
+            userName: user.userName,
+            id: user.id,
+            pofileImg: user.imgUrl,
+          },
           mainimageUrl: image.uri,
           contentCard: contantcards,
           location: locations,
@@ -221,7 +216,7 @@ class contentController {
         let result = await getRepository(Content)
           .createQueryBuilder('content')
           .select(['content.id', 'content.title', 'content.description'])
-          .addSelect(['user.id', 'user.userName'])
+          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
           .addSelect('image.uri')
           .innerJoin('content.user', 'user')
           .innerJoin('content.image', 'image')
@@ -272,7 +267,11 @@ class contentController {
           }
           result = {
             ...rest,
-            userName: user.userName,
+            user: {
+              userName: user.userName,
+              id: user.id,
+              pofileImg: user.imgUrl,
+            },
             mainimageUrl: image.uri,
             contentCard: contantcards,
             location: locations,
@@ -317,7 +316,7 @@ class contentController {
           .select(['content.id', 'content.title', 'content.description'])
           .addSelect(['image.uri', 'image.id'])
           .addSelect(['contentCard.description', 'contentCard.id'])
-          .addSelect(['user.id', 'user.userName'])
+          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
           .innerJoinAndSelect('content.user', 'user', 'user.id = :id', {
             id: req.query.userId,
           })
