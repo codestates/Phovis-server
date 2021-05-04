@@ -44,7 +44,6 @@ class userController {
       try {
         const image = req.file as any;
         const { userName } = req.body;
-        console.log(image);
         const profileImg = image ? await uploadToS3(image) : 'defualt';
         if (!userName) {
           res.status(400).send({ message: 'fill body data userName' }).end();
