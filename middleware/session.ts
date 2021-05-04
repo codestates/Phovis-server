@@ -5,7 +5,7 @@ const options: SessionOptions = {
   resave: false,
   saveUninitialized: true,
   cookie: {
-    maxAge: 60,
+    maxAge: 300,
     secure: true,
     httpOnly: true,
     sameSite: 'none',
