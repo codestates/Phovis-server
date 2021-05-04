@@ -18,30 +18,20 @@ export class Option {
   @JoinColumn()
   user!: User;
 
-  @Column({
-    nullable: true,
-  })
-  isFavourite!: boolean;
+  @Column()
+  isFavourite: boolean = false;
 
-  @Column({
-    nullable: true,
-  })
-  isBookmark!: boolean;
+  @Column()
+  isBookmark: boolean = false;
 
-  @Column({
-    nullable: true,
-  })
-  isFollow!: boolean;
+  @Column()
+  isFollow: boolean = false;
 
-  @Column({
-    nullable: true,
-  })
-  isName!: boolean;
+  @Column()
+  isName: boolean = false;
 
-  @Column({
-    nullable: true,
-  })
-  isEmail!: boolean;
+  @Column()
+  isEmail: boolean = false;
 
   @CreateDateColumn({
     type: 'timestamp',
