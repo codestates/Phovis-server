@@ -1,25 +1,35 @@
-import { stringTo2048 } from 'aws-sdk/clients/customerprofiles';
+// userinfo
+export type updateUserInfoResult = {
+  profileImg?: string;
+  userName?: string;
+};
 
+// auth
 export interface loginReqeustBody {
+  // POST auth/login Request
   email: string | null;
   password: string | null;
 }
 
 export interface googleRequestType {
+  // POST auth/google Request
   id_token: string;
 }
 
 export interface signupRequestBody {
+  // POST auth/signup Request
   userName?: string;
   email: string;
   password: string;
 }
 
 export interface googleOauthResponse {
+  // Axios google OAuth endpoint Response
   token?: string;
 }
 
 export interface googleUserinfo {
+  // Axios google OAuth GET userInfo from google
   iss: string;
   sub: string;
   azp: string;
@@ -36,6 +46,7 @@ export interface googleUserinfo {
 }
 
 export interface kakaoTokenRes {
+  // Axios Kakao OAuth GET token from kakao
   token_type: string;
   access_token: string;
   expires_in: number;
@@ -45,6 +56,7 @@ export interface kakaoTokenRes {
   error?: string;
 }
 export interface kakaoUserRes {
+  // Axios kakao OAuth GET userInfo from kakao
   id: number;
   kakao_account: {
     profile_needs_agreement: boolean;
@@ -66,7 +78,9 @@ export interface kakaoUserRes {
   };
 }
 
+// content Types
 export interface content {
+  // content types (from Entity)
   imageid: number;
   title: string;
   tags: string;
@@ -79,32 +93,39 @@ export interface content {
 }
 
 export interface contentfile {
+  // content image file Types
   images?: Express.Multer.File[];
   image?: Express.Multer.File[];
   tmpimages?: ConvertImg;
 }
 
 export type ConvertImg = {
+  // Convert content image file to data
   name: string;
   uri: string;
 };
 
 type images = {
+  // image Entity
   description: string;
   image: File;
 };
 
 export type Locationtype = {
+  // location Entity
   location: string;
   lat?: number;
   lng?: number;
 };
+
 type User = {
+  // User Response Type
   id: string;
   userName: string;
 };
 
 export type Imagetype = {
+  // image Entity Types
   name: string;
   description: string;
 };
@@ -142,5 +163,5 @@ export interface photocardres {
   url: string;
   description: string;
   location: Location;
-  tags: string[]
+  tags: string[];
 }

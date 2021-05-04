@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { getRepository } from 'typeorm';
+import { updateUserInfoResult } from '@interface/index';
 import { User } from '@entity/User';
 import { Content } from '@entity/Content';
 
@@ -48,6 +49,7 @@ class userController {
             .end();
         }
         // img 처리 과정
+        let profileImg; // 이미지 처리과정 후 url이 저장되어야 하는 변수명
         userName &&
           (await getRepository(User)
             .createQueryBuilder()
@@ -60,11 +62,21 @@ class userController {
           (await getRepository(User)
             .createQueryBuilder()
             .update({
-              imgUrl: img,
+              imgUrl: profileImg,
             })
             .where('user.id = :id', { id: checkedId })
             .execute());
-        res.status(200).send({ message: 'ok' });
+
+        const result: updateUserInfoResult = {};
+        const resultProxy = new Proxy(result, {
+          set: (obj, prop: 'profileImg' | 'userName', val) => {
+            if (val) obj[prop] = val;
+            return Boolean(val);
+          },
+        });
+        resultProxy.profileImg = profileImg;
+        resultProxy.userName = userName;
+        res.status(200).send(result);
       } catch (e) {
         res.status(403).send({ message: 'input error' });
         throw e;
