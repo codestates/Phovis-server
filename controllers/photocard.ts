@@ -117,12 +117,6 @@ class photocardController {
 
   public get = async (req: Request, res: Response) => {
     if (req.query.contentId) {
-      // const result = (await getRepository(Content)
-      //   .createQueryBuilder('content')
-      //   .innerJoin('content.tag', 'tag')
-      //   .where('content.id = :id', { id: req.query.contentId })
-      //   .getOne()) as any;
-
       const result = (await getRepository(Content).find({
         relations: ['tag', 'tag.imagecard'],
         where: { id: req.query.contentId },
@@ -189,6 +183,8 @@ class photocardController {
       res.status(200).send({ data: resBody });
     }
   };
+
+  public put = async (req: Request, res: Response) => {};
 }
 
 export default new photocardController();

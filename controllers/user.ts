@@ -3,6 +3,7 @@ import { getRepository } from 'typeorm';
 import { updateUserInfoResult } from '@interface/index';
 import { User } from '@entity/User';
 import { Content } from '@entity/Content';
+import { uploadToS3 } from '@middleware/service/aws_sdk';
 
 // TODO:
 class userController {
@@ -41,15 +42,14 @@ class userController {
       res.status(403).send('not authorize');
     } else {
       try {
-        const { userName, img } = req.body;
-        if (!userName && !img) {
-          res
-            .status(400)
-            .send({ message: 'fill body data (userName or img)' })
-            .end();
+        const image = req.file as any;
+        const { userName } = req.body;
+        const profileImg = image ? await uploadToS3(image) : 'defualt';
+        if (!userName) {
+          res.status(400).send({ message: 'fill body data userName' }).end();
         }
-        // img 처리 과정
-        let profileImg; // 이미지 처리과정 후 url이 저장되어야 하는 변수명
+ 
+        // profileImg  처리 과정
         userName &&
           (await getRepository(User)
             .createQueryBuilder()
@@ -58,25 +58,29 @@ class userController {
             })
             .where('user.id = :id', { id: checkedId })
             .execute());
-        img &&
-          (await getRepository(User)
-            .createQueryBuilder()
-            .update({
-              imgUrl: profileImg,
-            })
-            .where('user.id = :id', { id: checkedId })
-            .execute());
 
-        const result: updateUserInfoResult = {};
-        const resultProxy = new Proxy(result, {
-          set: (obj, prop: 'profileImg' | 'userName', val) => {
-            if (val) obj[prop] = val;
-            return Boolean(val);
-          },
-        });
-        resultProxy.profileImg = profileImg;
-        resultProxy.userName = userName;
-        res.status(200).send(result);
+
+        if (profileImg) {
+          profileImg &&
+            (await getRepository(User)
+              .createQueryBuilder()
+              .update({
+                imgUrl: profileImg,
+              })
+              .where('user.id = :id', { id: checkedId })
+              .execute());
+        } else {
+          profileImg &&
+            (await getRepository(User)
+              .createQueryBuilder()
+              .update({
+                imgUrl:
+                  'https://phovisimgs.s3.ap-northeast-2.amazonaws.com/blank-profile-picture-973460_1280-300x300-1.jpg',
+              })
+              .where('user.id = :id', { id: checkedId })
+              .execute());
+        }
+        res.status(200).send({ profileImg, userId: checkedId, userName });
       } catch (e) {
         res.status(403).send({ message: 'input error' });
         throw e;

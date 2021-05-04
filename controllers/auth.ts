@@ -135,7 +135,8 @@ class authController {
             userName: userName || 'unkown',
             email,
             password: '',
-            imgUrl: 'e',
+            imgUrl:
+              'https://phovisimgs.s3.ap-northeast-2.amazonaws.com/blank-profile-picture-973460_1280-300x300-1.jpg',
             type: 'email',
           },
         ])
