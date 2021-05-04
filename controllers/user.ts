@@ -44,7 +44,7 @@ class userController {
       try {
         const image = req.file as any;
         const { userName } = req.body;
-        console.log(image);
+
         const profileImg = image ? await uploadToS3(image) : 'defualt';
         if (!userName) {
           res.status(400).send({ message: 'fill body data userName' }).end();
@@ -112,6 +112,45 @@ class userController {
           user.favourite = isLike ? [...leftFavor, content] : [...leftFavor];
           userRepo.save(user);
           res.status(201).send({ isLike });
+        } else {
+          res.status(400).send('bad request');
+        }
+      } catch (e) {
+        console.log(e.message);
+        res.status(400).send('bad request');
+      }
+    }
+  };
+  public bookmarkContent = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    const { checkedId } = req;
+    if (!checkedId) {
+      res.status(403).send('not authorize');
+    } else {
+      const contentId = req.body.id;
+      if (!contentId) {
+        res.status(400).send('Fill content ID');
+      }
+      try {
+        const userRepo = await getRepository(User);
+        const contentRepo = await getRepository(Content);
+        const content = await contentRepo.findOne({ id: contentId });
+        const user = await userRepo.findOne({
+          relations: ['bookmark'],
+          where: { id: checkedId },
+        });
+        if (user && content) {
+          const leftBookmarks = user.bookmark.filter(
+            (list) => list.id !== contentId
+          );
+          const isBookmark = leftBookmarks.length === user.bookmark.length;
+          user.bookmark = isBookmark
+            ? [...leftBookmarks, content]
+            : [...leftBookmarks];
+          userRepo.save(user);
+          res.status(201).send({ isBookmark });
         } else {
           res.status(400).send('bad request');
         }
