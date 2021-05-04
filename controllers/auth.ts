@@ -339,10 +339,10 @@ class authController {
           });
           const result = await optionRepo.save(userOption);
           res.status(201).send({
-            isBookmark,
-            isEmail,
-            isFavourite,
-            isFollow,
+            isBookmark: result.isBookmark,
+            isEmail: result.isEmail,
+            isFavourite: result.isFavourite,
+            isFollow: result.isFollow,
           });
         } catch (e) {
           res.status(400).send(`bad Request ${e.message}`);
