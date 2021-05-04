@@ -6,7 +6,7 @@ import fs from 'fs';
 
 dotenv.config();
 
-const BUCKET = 'maintestbuild33';
+const BUCKET = process.env.AWS_BUCKET_NAME || 'maintestbuild33';
 const bucket = new AWS.S3({
   apiVersion: '2006-03-10',
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
