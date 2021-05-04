@@ -11,5 +11,5 @@ router.post('/kakao', authController.kakao);
 router.post('/password', authController.checkPW);
 router.put('/password', authController.updatePW);
 router.get('/token', authController.requestToken);
-
+router.put('/option', authController.updateOption);
 export default router;

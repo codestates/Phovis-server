@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import cryptoPW from '@middleware/service/customCrypto';
 import { signToken } from '@middleware/service/tokenController';
 import { User } from '@entity/User';
+import { Option } from '@entity/Option';
 import {
   loginReqeustBody,
   signupRequestBody,
@@ -149,14 +150,15 @@ class authController {
         ])
         .execute();
       const { id } = identifiers[0];
+      const option = new Option();
+      option.user = identifiers[0] as User;
+      await getRepository(Option).save(option);
+
+      const user = await getRepository(User).findOneOrFail(id);
       const encodePW = cryptoPW(password, id);
-      await getRepository(User)
-        .createQueryBuilder()
-        .update({
-          password: encodePW,
-        })
-        .where('user.id = :id', { id: id })
-        .execute();
+      user.Option = option;
+      user.password = encodePW;
+      await getRepository(User).save(user);
       res.status(201).send('ok');
     } else {
       res.status(404).send('valid email');
@@ -206,6 +208,13 @@ class authController {
           ])
           .execute();
         const { id } = identifiers[0] as User;
+        const option = new Option();
+        option.user = identifiers[0] as User;
+        await getRepository(Option).save(option);
+
+        const user = await getRepository(User).findOneOrFail(id);
+        user.Option = option;
+        await getRepository(User).save(user);
         const { accessToken, refreshToken } = signToken(id);
         res
           .status(201)
@@ -281,6 +290,13 @@ class authController {
         ])
         .execute();
       const { id } = identifiers[0] as User;
+      const option = new Option();
+      option.user = identifiers[0] as User;
+      await getRepository(Option).save(option);
+
+      const user = await getRepository(User).findOneOrFail(id);
+      user.Option = option;
+      await getRepository(User).save(user);
       const { accessToken, refreshToken } = signToken(id);
       res
         .status(201)
@@ -290,6 +306,48 @@ class authController {
           sameSite: 'none',
         })
         .send({ accessToken });
+    }
+  };
+  public updateOption = async (req: Request, res: Response): Promise<void> => {
+    const { checkedId } = req;
+    if (!checkedId) {
+      res.status(401).send('not authorized');
+    } else {
+      const { isBookmark, isFollow, isEmail, isFavourite } = req.body;
+      if (
+        isBookmark === undefined &&
+        isFollow === undefined &&
+        isEmail === undefined &&
+        isFavourite === undefined
+      ) {
+        res.status(400).send(`fill body`);
+      } else {
+        try {
+          const userRepo = await getRepository(User);
+          const optionRepo = await getRepository(Option);
+          const user = await userRepo.findOneOrFail({
+            relations: ['Option'],
+            where: { id: checkedId },
+          });
+          const optionId = user.Option.id;
+          const userOption = await optionRepo.findOneOrFail(optionId);
+          optionRepo.merge(userOption, {
+            isBookmark,
+            isEmail,
+            isFavourite,
+            isFollow,
+          });
+          const result = await optionRepo.save(userOption);
+          res.status(201).send({
+            isBookmark,
+            isEmail,
+            isFavourite,
+            isFollow,
+          });
+        } catch (e) {
+          res.status(400).send(`bad Request ${e.message}`);
+        }
+      }
     }
   };
 }
