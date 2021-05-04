@@ -338,12 +338,16 @@ class authController {
             isFollow,
           });
           const result = await optionRepo.save(userOption);
+<<<<<<< HEAD
           res.status(201).send({
             isBookmark,
             isEmail,
             isFavourite,
             isFollow,
           });
+=======
+          res.status(201).send({ ...result });
+>>>>>>> 49fde4d6bc35ee662344cf958f1d0723b2d2bd57
         } catch (e) {
           res.status(400).send(`bad Request ${e.message}`);
         }
