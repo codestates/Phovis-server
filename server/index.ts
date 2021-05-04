@@ -33,7 +33,7 @@ app.use(...middleware[env]);
 app.get('/', async (req: express.Request, res: express.Response) => {
   // route 53 health check
   try {
-    res.send('Hello World');
+    res.status(200).send('Hello World');
   } catch (err) {
     console.log(err);
   }

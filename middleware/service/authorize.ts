@@ -19,7 +19,7 @@ export default (req: Request, res: Response, next: NextFunction) => {
         req.checkedId = id;
         next();
       } catch (e) {
-        res.status(403).send('not authorized');
+        res.status(401).send('not authorized');
       }
     } else {
       res.status(403).send(`token type Error: ${type}`);

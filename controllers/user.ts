@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { getRepository } from 'typeorm';
 import { User } from '@entity/User';
+import { Content } from '@entity/Content';
 
 // TODO:
 class userController {
@@ -13,7 +14,13 @@ class userController {
       try {
         const user = await getRepository(User)
           .createQueryBuilder('user')
-          .select(['user.userName', 'user.email', 'user.imgUrl', 'user.type'])
+          .select([
+            'user.id',
+            'user.userName',
+            'user.email',
+            'user.imgUrl',
+            'user.type',
+          ])
           .where('user.id = :id', { id: checkedId })
           .getOne();
         if (user) {
@@ -61,6 +68,42 @@ class userController {
       } catch (e) {
         res.status(403).send({ message: 'input error' });
         throw e;
+      }
+    }
+  };
+  public likeContent = async (req: Request, res: Response): Promise<void> => {
+    const { checkedId } = req;
+    if (!checkedId) {
+      res.status(403).send('not authorize');
+    } else {
+      const contentId = req.body.id;
+      if (!contentId) {
+        res.status(400).send('Fill content ID');
+      }
+      try {
+        const userRepo = await getRepository(User);
+        const contentRepo = await getRepository(Content);
+        const content = await contentRepo.findOne({ id: contentId });
+        const user = await userRepo.findOne({
+          relations: ['favourite'],
+          where: { id: checkedId },
+        });
+        if (user && content) {
+          const leftFavor = user.favourite.filter(
+            (list) => list.id !== contentId
+          );
+          user.favourite =
+            leftFavor.length === user.favourite.length
+              ? [...leftFavor, content]
+              : [...leftFavor];
+          userRepo.save(user);
+          res.status(200).send(user); // 어떤 결과가 오는게 좋을까요?
+        } else {
+          res.status(400).send('bad request');
+        }
+      } catch (e) {
+        console.log(e.message);
+        res.status(400).send('bad request');
       }
     }
   };

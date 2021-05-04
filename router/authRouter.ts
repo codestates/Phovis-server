@@ -8,6 +8,6 @@ router.post('/login', authController.login);
 router.post('/signup', authController.signup);
 router.post('/google', authController.google);
 router.post('/kakao', authController.kakao);
-router.post('/token', authController.requestToken);
+router.get('/token', authController.requestToken);
 
 export default router;
