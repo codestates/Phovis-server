@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getRepository, ObjectLiteral } from 'typeorm';
+import { Brackets, getRepository, ObjectLiteral } from 'typeorm';
 import { Content, ContentCard, Image, Location, Tag } from '@entity/index';
 import {
   content,
@@ -11,7 +11,10 @@ import {
 } from '../interface/index';
 import { insertdb, CreateRelation } from '../src/DBfunctionCollections';
 import { uploadToS3, deleteToS3 } from '../middleware/service/aws_sdk';
-import { CreateResult } from '../middleware/service/content';
+import {
+  CreateResult,
+  transfromContentResult,
+} from '../middleware/service/content';
 
 class contentController {
   public post = async (req: Request, res: Response): Promise<void> => {
@@ -133,7 +136,7 @@ class contentController {
         }
       }
 
-      let result = await getRepository(Content)
+      let result = (await getRepository(Content)
         .createQueryBuilder('content')
         .select(['content.id', 'content.title', 'content.description'])
         .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
@@ -141,7 +144,7 @@ class contentController {
         .innerJoin('content.user', 'user')
         .innerJoin('content.image', 'image')
         .where('content.id = :id', { id: contentid[0].id })
-        .getOne();
+        .getOne()) as Content;
 
       let contentCards = await getRepository(ContentCard)
         .createQueryBuilder('contentCard')
@@ -159,40 +162,15 @@ class contentController {
         .where('content.id = :id', { id: contentid[0].id })
         .getMany();
 
-      let locations = await getRepository(Location)
+      let locations = (await getRepository(Location)
         .createQueryBuilder('location')
         .select(['location.location', 'location.lat', 'location.lng'])
         .leftJoin('location.content', 'content')
         .where('location.id = :id', { id: locationid[0].id })
-        .getOne();
+        .getOne()) as Location;
 
-      // 보내줘야할 객체 생성하기
-      if (result && contentCards) {
-        contentCards = contentCards.map((el) => {
-          const { image, ...rest } = el;
-          return { ...rest, uri: image.uri };
-        }) as any[];
-        const { user, image, ...rest } = result as any;
-        let itag: any[];
-        if (tag.length !== 0) {
-          let { tag: tags } = tag[0] as any;
-          console.log(tags);
-          itag = tags.map((el: Tag) => el.tagName);
-          rest.tag = [...itag];
-        }
-
-        result = {
-          ...rest,
-          user: {
-            userName: user.userName,
-            id: user.id,
-            profileImg: user.imgUrl,
-          },
-          mainimageUrl: image.uri,
-          images: contentCards,
-          location: locations,
-        };
-      }
+      //보내 줘야할 객체 생성
+      result = transfromContentResult(result, contentCards, tag, locations);
 
       res.status(201).send({ ...result });
     } catch (err) {
@@ -206,7 +184,7 @@ class contentController {
     if (req.query.id) {
       const contentid = req.query.id;
       try {
-        let result = await getRepository(Content)
+        let result = (await getRepository(Content)
           .createQueryBuilder('content')
           .select(['content.id', 'content.title', 'content.description'])
           .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
@@ -214,7 +192,7 @@ class contentController {
           .innerJoin('content.user', 'user')
           .innerJoin('content.image', 'image')
           .where('content.id = :id', { id: contentid })
-          .getOne();
+          .getOne()) as Content;
 
         if (!result) res.status(400).send({ message: 'Bad request' }).end();
 
@@ -234,7 +212,7 @@ class contentController {
           .where('content.id = :id', { id: contentid })
           .getMany();
 
-        let locations = await getRepository(Location)
+        let locations = (await getRepository(Location)
           .createQueryBuilder('location')
           .select(['location.location', 'location.lat', 'location.lng'])
           .leftJoinAndSelect(
@@ -245,34 +223,10 @@ class contentController {
               id: contentid,
             }
           )
-          .getOne();
+          .getOne()) as Location;
 
-        // 보내줘야할 객체 생성하기
-        if (result && contentCards) {
-          contentCards = contentCards.map((el) => {
-            const { image, ...rest } = el;
-            return { ...rest, uri: image.uri };
-          }) as any[];
-          const { user, image, ...rest } = result as any;
-          let itag: any[];
-          if (tag.length !== 0) {
-            let { tag: tags } = tag[0] as any;
-            itag = tags.map((el: Tag) => el.tagName);
-            rest.tag = [...itag];
-          }
-          const { content, ...locationinfo } = locations as Location;
-          result = {
-            ...rest,
-            user: {
-              userName: user.userName,
-              id: user.id,
-              profileImg: user.imgUrl,
-            },
-            mainimageUrl: image.uri,
-            images: contentCards,
-            location: locationinfo,
-          };
-        }
+        //보내 줘야할 객체 생성
+        result = transfromContentResult(result, contentCards, tag, locations);
 
         res.status(200).send({ result }).end();
       } catch (err) {
@@ -289,38 +243,37 @@ class contentController {
         .addSelect(['user.userName', 'user.id', 'user.imgUrl'])
         .addSelect('image.uri')
         .addSelect(['contentCard.description', 'contentCard.id'])
-        .innerJoinAndSelect(
-          'content.tag',
-          'tag',
-          'tag.tagName In (:...tagName)',
-          { tagName: tags }
-        )
+        .innerJoin('content.tag', 'tag')
         .innerJoin('content.user', 'user')
         .innerJoin('content.image', 'image')
         .innerJoin('content.contentCard', 'contentCard')
-        .limit(limit as number)
+        .where('tag.tagName IN (:...tagName)', { tagName: [...tags] })
+        .take(limit)
         .getMany()) as any;
-
+      console.log(result);
       result = await CreateResult(result);
 
       res.status(200).send({ maxnum: limit, data: result });
     } else if (req.query.filter || req.query.userId) {
       let result = [];
       if (!req.query.filter) {
-        result = (await getRepository(Content)
-          .createQueryBuilder('content')
-          .select(['content.id', 'content.title', 'content.description'])
-          .addSelect(['image.uri', 'image.id'])
-          .addSelect(['contentCard.description', 'contentCard.id'])
-          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
-          .innerJoinAndSelect('content.user', 'user', 'user.id = :id', {
-            id: req.query.userId,
-          })
-          .innerJoin('content.image', 'image')
-          .innerJoinAndSelect('content.tag', 'tag')
-          .innerJoin('content.contentCard', 'contentCard')
-          .limit(limit)
-          .getMany()) as any;
+        try {
+          result = (await getRepository(Content)
+            .createQueryBuilder('content')
+            .select(['content.id', 'content.title', 'content.description'])
+            .addSelect(['image.uri', 'image.id'])
+            .addSelect(['contentCard.description', 'contentCard.id'])
+            .addSelect(['users.id', 'users.userName', 'users.imgUrl'])
+            .innerJoin('content.user', 'users')
+            .innerJoin('content.image', 'image')
+            .innerJoin('content.tag', 'tag')
+            .innerJoin('content.contentCard', 'contentCard')
+            .where('users.id = :id', { id: req.query.userId })
+            .take(limit)
+            .getMany()) as any;
+        } catch (err) {
+          console.log(err);
+        }
       } else if (req.query.filter === 'bookmark') {
         result = (await getRepository(Content)
           .createQueryBuilder('content')
@@ -328,7 +281,7 @@ class contentController {
           .addSelect(['image.uri', 'image.id'])
           .addSelect(['contentCard.description', 'contentCard.id'])
           .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
-          .innerJoinAndSelect('content.user', 'user')
+          .innerJoin('content.user', 'user')
           .innerJoinAndSelect(
             'user.bookmark',
             'bookmark',
@@ -338,9 +291,9 @@ class contentController {
             }
           )
           .innerJoin('content.image', 'image')
-          .innerJoinAndSelect('content.tag', 'tag')
+          .innerJoin('content.tag', 'tag')
           .innerJoin('content.contentCard', 'contentCard')
-          .limit(limit)
+          .take(limit)
           .getMany()) as any;
       } else if (req.query.filter === 'like') {
         result = (await getRepository(Content)
@@ -349,7 +302,7 @@ class contentController {
           .addSelect(['image.uri', 'image.id'])
           .addSelect(['contentCard.description', 'contentCard.id'])
           .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
-          .innerJoinAndSelect('content.user', 'user')
+          .innerJoin('content.user', 'user')
           .innerJoinAndSelect(
             'user.favourite',
             'favourite',
@@ -359,9 +312,9 @@ class contentController {
             }
           )
           .innerJoin('content.image', 'image')
-          .innerJoinAndSelect('content.tag', 'tag')
+          .innerJoin('content.tag', 'tag')
           .innerJoin('content.contentCard', 'contentCard')
-          .limit(limit)
+          .take(limit)
           .getMany()) as any;
       }
       if (!result) res.status(400).send({ message: 'Bad Request' }).end();
@@ -511,7 +464,7 @@ class contentController {
           }
         }
 
-        let result = await getRepository(Content)
+        let result = (await getRepository(Content)
           .createQueryBuilder('content')
           .select(['content.id', 'content.title', 'content.description'])
           .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
@@ -519,7 +472,7 @@ class contentController {
           .innerJoin('content.user', 'user')
           .innerJoin('content.image', 'image')
           .where('content.id = :id', { id: contentid[0].id })
-          .getOne();
+          .getOne()) as Content;
 
         let contentCards = await getRepository(ContentCard)
           .createQueryBuilder('contentCard')
@@ -537,39 +490,17 @@ class contentController {
           .where('content.id = :id', { id: contentid[0].id })
           .getMany();
 
-        let locations = await getRepository(Location)
+        let locations = (await getRepository(Location)
           .createQueryBuilder('location')
           .select(['location.location', 'location.lat', 'location.lng'])
           .leftJoin('location.content', 'content')
           .where('location.id = :id', { id: locationid[0].id })
-          .getOne();
+          .getOne()) as Location;
 
-        // 보내줘야할 객체 생성하기
-        if (result && contentCards) {
-          contentCards = contentCards.map((el) => {
-            const { image, ...rest } = el;
-            return { ...rest, uri: image.uri };
-          }) as any[];
-          const { user, image, ...rest } = result as any;
-          let itag: any[];
-          if (tag.length !== 0) {
-            let { tag: tags } = tag[0] as any;
-            itag = tags.map((el: Tag) => el.tagName);
-            rest.tag = [...itag];
-          }
-          result = {
-            ...rest,
-            user: {
-              userName: user.userName,
-              id: user.id,
-              profileImg: user.imgUrl,
-            },
-            mainimageUrl: image.uri,
-            images: contentCards,
-            location: locations,
-          };
-        }
+        //보내 줘야할 객체 생성
+        result = transfromContentResult(result, contentCards, tag, locations);
 
+        //기존 데이터 삭제 버킷 이미지 삭제
         const uris = await getRepository(ContentCard)
           .createQueryBuilder('contentCard')
           .select('contentCard.id')

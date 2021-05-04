@@ -1,5 +1,5 @@
 import { getRepository } from 'typeorm';
-import { ContentCard, Location, User } from '@entity/index';
+import { ContentCard, Location, User, Content, Tag } from '@entity/index';
 import { resultContent } from '../../interface/index';
 
 export async function CreateResult(result: any[]) {
@@ -44,7 +44,7 @@ export async function CreateResult(result: any[]) {
         result[i].likes = favouriteCount;
       }
     }
-    if (result[i].tag.length !== 0) {
+    if (result[i].tag) {
       for (let j = 0; j < result[i].tag.length; j++) {
         if (result[i].tag[j]) {
           const { tagName, ...rest } = result[i].tag[j];
@@ -62,7 +62,42 @@ export async function CreateResult(result: any[]) {
       images: contentCard,
       user: { id, userName, profileImg: imgUrl },
     } as resultContent;
-
-    return result as Promise<resultContent>[];
   }
+  return result as Promise<resultContent>[];
 }
+
+// 보내줘야할 객체 생성하기
+export const transfromContentResult = (
+  result: Content,
+  contentCards: ContentCard[],
+  tag: Content[],
+  locations: Location
+) => {
+  if (result && contentCards) {
+    contentCards = contentCards.map((el) => {
+      const { image, ...rest } = el;
+      return { ...rest, imageurl: image.uri };
+    }) as any[];
+    const { user, image, ...rest } = result as any;
+    let itag: any[];
+    if (tag.length !== 0) {
+      let { tag: tags } = tag[0] as any;
+      console.log(tags);
+      itag = tags.map((el: Tag) => el.tagName);
+      rest.tag = [...itag];
+    }
+
+    const { content, ...locationinfo } = locations as Location;
+    return (result = {
+      ...rest,
+      user: {
+        userName: user.userName,
+        id: user.id,
+        profileImg: user.imgUrl,
+      },
+      mainimageUrl: image.uri,
+      images: contentCards,
+      location: locationinfo,
+    });
+  }
+};
