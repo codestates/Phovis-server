@@ -8,6 +8,8 @@ import {
   UpdateDateColumn,
   ManyToMany,
 } from 'typeorm';
+import { Content } from './Content';
+import { Imagecard } from './Imagcard';
 import { Location } from './Location';
 
 @Entity()
@@ -23,6 +25,14 @@ export class Tag {
   })
   @JoinTable()
   location!: Location[];
+
+  @ManyToMany(() => Imagecard, (imagecard) => imagecard.tag, {
+    cascade: ['insert'],
+  })
+  imagecard!: Imagecard[];
+
+  @ManyToMany(() => Content, (content) => content.tag)
+  content!: Content[];
 
   @CreateDateColumn({
     type: 'timestamp',

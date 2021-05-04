@@ -68,7 +68,7 @@ export const CreateRelation = async (
   Entity: connection.EntityTarget<unknown>,
   columnName: string,
   baseresult: ObjectLiteral | number | string,
-  targetresult: ObjectLiteral | ObjectLiteral | number | string,
+  targetresult: ObjectLiteral | number | string,
   type: string
 ) => {
   try {

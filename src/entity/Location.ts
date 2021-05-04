@@ -6,8 +6,10 @@ import {
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { Content } from './Content';
+import { Imagecard } from './Imagcard';
 
 @Entity()
 export class Location {
@@ -35,6 +37,9 @@ export class Location {
   })
   @JoinTable()
   content!: Content[];
+
+  @OneToMany(() => Imagecard, (imagecard) => imagecard.location)
+  imagecard!: Imagecard[];
 
   @CreateDateColumn({
     type: 'timestamp',

@@ -22,10 +22,10 @@ router.post('/', function (req: Request, res: Response, next) {
 
 router.post('/', photocardController.post);
 
-// router.get('/', photoCardController.get);
+router.get('/', photocardController.get);
 
-// router.put('/', cpUpload, photoCardController.put);
+// router.put('/', cpUpload, photocardController.put);
 
-// router.delete('/', photoCardController.delete);
+// router.delete('/', photocardController.delete);
 
 export default router;

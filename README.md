@@ -31,7 +31,7 @@ Steps to run this project:
 - setup
 
 3. fill `ormconfig.json` database info
-4. `npm run generate`
+4. `npm run generate:mig`
 5. `npm run migration`
 6. `npm run seed` insert Seed Data
 7. `npm run start` run nodemon server

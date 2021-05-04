@@ -6,6 +6,7 @@ import {
   contentRouter,
   userRouter,
   photocardRouter,
+  tagRouter,
 } from '../router';
 import https from 'https';
 import middleware from '../middleware/index';
@@ -42,7 +43,7 @@ app.get('/', async (req: express.Request, res: express.Response) => {
 // router
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
-
+app.use('/tag', tagRouter);
 app.use('/content', contentRouter);
 app.use('/photocard', photocardRouter);
 

@@ -71,7 +71,7 @@ const InsertSeedData = async () => {
     await connection.getRepository(Content).save(contentinstance);
     await connection.getRepository(Imagecard).save(imagecardinstance);
 
-    console.log('make Seed check your database');
+    console.log('make Seed! check your database');
   } catch (err) {
     console.log(err);
   }
