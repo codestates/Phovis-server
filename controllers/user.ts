@@ -160,6 +160,54 @@ class userController {
       }
     }
   };
+
+  public followUser = async (req: Request, res: Response): Promise<void> => {
+    const { checkedId } = req;
+    if (!checkedId) {
+      res.status(403).send('not authorize');
+    } else {
+      const userId = req.body.id;
+      if (!userId) {
+        res.status(400).send('Fill user ID');
+      }
+      try {
+        const userRepo = await getRepository(User);
+        const follower = await userRepo.findOne({
+          relations: ['following'],
+          where: { id: checkedId },
+        });
+        const followee = await userRepo.findOne({
+          relations: ['follower'],
+          where: { id: userId },
+        });
+        if (follower && followee) {
+          const leftFollowee = follower.following.filter(
+            (list) => list.id !== userId
+          );
+          const leftFollower = followee.follower.filter(
+            (list) => list.id !== checkedId
+          );
+          const isFollow = leftFollowee.length === follower.following.length;
+          follower.following = isFollow
+            ? [...leftFollowee, followee]
+            : [...leftFollowee];
+
+          followee.follower = isFollow
+            ? [...leftFollower, follower]
+            : [...leftFollower];
+
+          userRepo.save(follower);
+          userRepo.save(followee);
+          res.status(201).send({ isFollow });
+        } else {
+          res.status(400).send('bad request');
+        }
+      } catch (e) {
+        console.log(e.message);
+        res.status(400).send('bad request');
+      }
+    }
+  };
 }
 
 export default new userController();

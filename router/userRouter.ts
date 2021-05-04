@@ -10,6 +10,7 @@ const router = express.Router();
 router.get('/info', userController.getinfo);
 router.put('/info', profileUpload, userController.updateInfo);
 router.put('/like', userController.likeContent);
+router.put('/follow', userController.followUser);
 router.put('/bookmark', userController.bookmarkContent);
 
 export default router;

@@ -19,7 +19,7 @@ class authController {
   // 비밀번호 확인
   public checkPW = async (req: Request, res: Response): Promise<void> => {
     const { password } = req.body;
-    if (!req.checkedId || password) {
+    if (!req.checkedId || !password) {
       res.status(403).send({ message: 'not authorize' });
     } else {
       const encodedPW = cryptoPW(password, req.checkedId);
@@ -28,7 +28,10 @@ class authController {
         .where('user.password = :password', { password: encodedPW })
         .getOne();
       if (user) {
-        const token = crypto.randomBytes(64).toString();
+        const token = crypto
+          .createHash('sha256')
+          .update(req.sessionID)
+          .digest('hex');
         req.session.token = token;
         res.status(200).send({ key: token });
       } else {
@@ -49,17 +52,21 @@ class authController {
       res.status(400).send('bad Request "not key"').end();
     }
     if (key === req.session.token) {
-      const { newPassword } = req.body;
+      const { password } = req.body;
       const { checkedId } = req;
-      const endcodePW = cryptoPW(newPassword, checkedId as string);
-      await getRepository(User)
-        .createQueryBuilder()
-        .update({
-          password: endcodePW,
-        })
-        .where('id = :id', { id: checkedId })
-        .execute();
-      res.status(203).send({ message: 'Update finish' });
+      const encodedPW = cryptoPW(password, checkedId as string);
+      try {
+        await getRepository(User)
+          .createQueryBuilder()
+          .update({
+            password: encodedPW,
+          })
+          .where('id = :id', { id: checkedId })
+          .execute();
+        res.status(203).send({ message: 'Update finish' });
+      } catch (e) {
+        res.status(400).send({ message: e.message });
+      }
     }
   };
   // 엑세스 토큰 재요청
