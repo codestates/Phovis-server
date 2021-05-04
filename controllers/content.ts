@@ -1,6 +1,13 @@
 import { Request, Response } from 'express';
 import { Brackets, getRepository, ObjectLiteral } from 'typeorm';
-import { Content, ContentCard, Image, Location, Tag } from '@entity/index';
+import {
+  Content,
+  ContentCard,
+  Image,
+  Location,
+  Tag,
+  User,
+} from '@entity/index';
 import {
   content,
   contentfile,
@@ -197,7 +204,7 @@ class contentController {
           .innerJoin('content.user', 'user')
           .innerJoin('content.image', 'image')
           .where('content.id = :id', { id: contentid })
-          .getOne()) as Content;
+          .getOne()) as any;
 
         if (!result) res.status(400).send({ message: 'Bad request' }).end();
 
@@ -230,6 +237,27 @@ class contentController {
           )
           .getOne()) as Location;
 
+        const likeinfo = await getRepository(User)
+          .createQueryBuilder('user')
+          .innerJoin('user.favourite', 'favourite')
+          .where('user.id = :userid', { userid: req.checkedId })
+          .andWhere('favourite.id = :id', {
+            id: contentid,
+          })
+          .getOne();
+
+        const bookmark = await getRepository(User)
+          .createQueryBuilder('user')
+          .innerJoin('user.bookmark', 'bookmark')
+          .where('bookmark.id = :id', {
+            id: contentid,
+          })
+          .andWhere('user.id = :userid', { userid: req.checkedId })
+          .getOne();
+
+        if (likeinfo) result.like = true;
+        if (bookmark) result.bookmark = true;
+
         //보내 줘야할 객체 생성
         result = transfromContentResult(result, contentCards, tag, locations);
 
@@ -255,8 +283,8 @@ class contentController {
         .where('tag.tagName IN (:...tagName)', { tagName: [...tags] })
         .take(limit)
         .getMany()) as any;
-      console.log(result);
-      result = await CreateResult(result);
+
+      result = await CreateResult(result, req.checkedId as string);
 
       res.status(200).send({ maxnum: limit, data: result });
     } else if (req.query.filter || req.query.userId) {

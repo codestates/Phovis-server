@@ -2,7 +2,7 @@ import { getRepository } from 'typeorm';
 import { ContentCard, Location, User, Content, Tag } from '@entity/index';
 import { resultContent } from '../../interface/index';
 
-export async function CreateResult(result: any[]) {
+export async function CreateResult(result: any, checkedid?: string | null) {
   for (let i = 0; i < result.length; i++) {
     for (let j = 0; j < result[i].contentCard.length; j++) {
       const tempContentCard = (await getRepository(ContentCard)
@@ -51,6 +51,29 @@ export async function CreateResult(result: any[]) {
           if (tagName) result[i].tag[j] = tagName as resultContent;
         }
       }
+    }
+
+    if (checkedid) {
+      const likeinfo = await getRepository(User)
+        .createQueryBuilder('user')
+        .innerJoin('user.favourite', 'favourite')
+        .where('user.id = :userid', { userid: checkedid })
+        .andWhere('favourite.id = :id', {
+          id: result[i].id,
+        })
+        .getOne();
+
+      const bookmark = await getRepository(User)
+        .createQueryBuilder('user')
+        .innerJoin('user.bookmark', 'bookmark')
+        .where('bookmark.id = :id', {
+          id: result[i].id,
+        })
+        .andWhere('user.id = :userid', { userid: checkedid })
+        .getOne();
+
+      if (likeinfo) result.like = true;
+      if (bookmark) result.bookmark = true;
     }
 
     const { contentCard, image, ...rest } = result[i];
