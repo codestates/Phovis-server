@@ -28,9 +28,6 @@ export class Option {
   isFollow: boolean = false;
 
   @Column()
-  isName: boolean = false;
-
-  @Column()
   isEmail: boolean = false;
 
   @CreateDateColumn({
