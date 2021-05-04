@@ -104,12 +104,10 @@ class userController {
           const leftFavor = user.favourite.filter(
             (list) => list.id !== contentId
           );
-          user.favourite =
-            leftFavor.length === user.favourite.length
-              ? [...leftFavor, content]
-              : [...leftFavor];
+          const isLike = leftFavor.length === user.favourite.length;
+          user.favourite = isLike ? [...leftFavor, content] : [...leftFavor];
           userRepo.save(user);
-          res.status(200).send(user); // 어떤 결과가 오는게 좋을까요?
+          res.status(201).send({ isLike });
         } else {
           res.status(400).send('bad request');
         }
