@@ -142,6 +142,7 @@ class photocardController {
         .innerJoin('imagecard.tag', 'tags')
         .innerJoin('imagecard.image', 'images')
         .where('imagecard.id IN (:...id)', { id: findkeys })
+        .take(Number(req.query.maxnum) || 10)
         .getMany();
 
       const resBody = imagecard.map((ele) => {
@@ -169,6 +170,7 @@ class photocardController {
         .innerJoin('imagecard.tag', 'tags')
         .innerJoin('imagecard.image', 'images')
         .where('tags.tagName IN (:...tagName)', { tagName: tag })
+        .take(Number(req.query.maxnum) || 10)
         .getMany();
 
       const resBody = imagecard.map((ele) => {
