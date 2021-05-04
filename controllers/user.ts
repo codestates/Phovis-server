@@ -44,11 +44,12 @@ class userController {
       try {
         const image = req.file as any;
         const { userName } = req.body;
+
         const profileImg = image ? await uploadToS3(image) : 'defualt';
         if (!userName) {
           res.status(400).send({ message: 'fill body data userName' }).end();
         }
- 
+
         // profileImg  처리 과정
         userName &&
           (await getRepository(User)
@@ -58,7 +59,6 @@ class userController {
             })
             .where('user.id = :id', { id: checkedId })
             .execute());
-
 
         if (profileImg) {
           profileImg &&
