@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { getRepository } from 'typeorm';
 import { User } from '@entity/User';
 import { Content } from '@entity/Content';
+import { uploadToS3 } from '@middleware/service/aws_sdk';
 
 // TODO:
 class userController {
@@ -40,14 +41,13 @@ class userController {
       res.status(403).send('not authorize');
     } else {
       try {
-        const { userName, img } = req.body;
-        if (!userName && !img) {
-          res
-            .status(400)
-            .send({ message: 'fill body data (userName or img)' })
-            .end();
+        const { image } = req.file as any;
+        const { userName } = req.body;
+        if (!userName) {
+          res.status(400).send({ message: 'fill body data userName' }).end();
         }
-        // img 처리 과정
+        // profileImg  처리 과정
+        const profileImg = image ? await uploadToS3(image) : 'defualt';
         userName &&
           (await getRepository(User)
             .createQueryBuilder()
@@ -56,15 +56,28 @@ class userController {
             })
             .where('user.id = :id', { id: checkedId })
             .execute());
-        img &&
-          (await getRepository(User)
-            .createQueryBuilder()
-            .update({
-              imgUrl: img,
-            })
-            .where('user.id = :id', { id: checkedId })
-            .execute());
-        res.status(200).send({ message: 'ok' });
+
+        if (profileImg) {
+          profileImg &&
+            (await getRepository(User)
+              .createQueryBuilder()
+              .update({
+                imgUrl: profileImg,
+              })
+              .where('user.id = :id', { id: checkedId })
+              .execute());
+        } else {
+          profileImg &&
+            (await getRepository(User)
+              .createQueryBuilder()
+              .update({
+                imgUrl:
+                  'https://phovisimgs.s3.ap-northeast-2.amazonaws.com/blank-profile-picture-973460_1280-300x300-1.jpg',
+              })
+              .where('user.id = :id', { id: checkedId })
+              .execute());
+        }
+        res.status(200).send({ profileImg, userId: checkedId, userName });
       } catch (e) {
         res.status(403).send({ message: 'input error' });
         throw e;
