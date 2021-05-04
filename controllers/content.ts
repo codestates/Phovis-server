@@ -206,7 +206,10 @@ class contentController {
           .where('content.id = :id', { id: contentid })
           .getOne()) as any;
 
-        if (!result) res.status(400).send({ message: 'Bad request' }).end();
+        if (!result) {
+          res.status(400).send({ message: 'Bad request' }).end();
+          return;
+        }
 
         let contentCards = await getRepository(ContentCard)
           .createQueryBuilder('contentCard')
@@ -265,6 +268,7 @@ class contentController {
       } catch (err) {
         console.log(err);
         res.status(400).send({ message: 'Bad Request' }).end();
+        return;
       }
     } else if (req.query.tag) {
       const tag = req.query.tag as string;
@@ -286,7 +290,8 @@ class contentController {
 
       result = await CreateResult(result, req.checkedId as string);
 
-      res.status(200).send({ maxnum: limit, data: result });
+      res.status(200).send({ maxnum: limit, data: result }).end;
+      return;
     } else if (req.query.filter || req.query.userId) {
       let result = [];
       if (!req.query.filter) {
@@ -350,8 +355,14 @@ class contentController {
           .take(limit)
           .getMany()) as any;
       }
-      if (!result) res.status(400).send({ message: 'Bad Request' }).end();
-      result = (await CreateResult(result)) as Promise<resultContent>[];
+      if (!result) {
+        res.status(400).send({ message: 'Bad Request' }).end();
+        return;
+      }
+      result = (await CreateResult(
+        result,
+        req.checkedId
+      )) as Promise<resultContent>[];
       res.status(200).send(result).end();
     }
   };
@@ -465,7 +476,8 @@ class contentController {
             );
           } catch (err) {
             console.log(err);
-            res.status(400).send({ message: 'Bad request' });
+            res.status(400).send({ message: 'Bad request' }).end();
+            return;
           }
         });
 

@@ -72,8 +72,8 @@ export async function CreateResult(result: any, checkedid?: string | null) {
         .andWhere('user.id = :userid', { userid: checkedid })
         .getOne();
 
-      result.islike = likeinfo ? true : false;
-      result.isbookmark = bookmark ? true : false;
+      result[i].islike = likeinfo ? true : false;
+      result[i].isbookmark = bookmark ? true : false;
     }
 
     const { contentCard, image, ...rest } = result[i];
