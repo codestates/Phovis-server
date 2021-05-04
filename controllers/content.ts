@@ -255,8 +255,8 @@ class contentController {
           .andWhere('user.id = :userid', { userid: req.checkedId })
           .getOne();
 
-        if (likeinfo) result.like = true;
-        if (bookmark) result.bookmark = true;
+        result.islike = likeinfo ? true : false;
+        result.isbookmark = bookmark ? true : false;
 
         //보내 줘야할 객체 생성
         result = transfromContentResult(result, contentCards, tag, locations);
