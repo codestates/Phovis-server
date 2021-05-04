@@ -44,8 +44,10 @@ class userController {
       try {
         const image = req.file as any;
         const { userName } = req.body;
-        console.log(image);
-        const profileImg = image ? await uploadToS3(image) : 'defualt';
+
+        const profileImg = image
+          ? await uploadToS3(image)
+          : 'https://phovisimgs.s3.ap-northeast-2.amazonaws.com/blank-profile-picture-973460_1280-300x300-1.jpg';
         if (!userName) {
           res.status(400).send({ message: 'fill body data userName' }).end();
         }
@@ -60,26 +62,15 @@ class userController {
             .where('user.id = :id', { id: checkedId })
             .execute());
 
-        if (profileImg) {
-          profileImg &&
-            (await getRepository(User)
-              .createQueryBuilder()
-              .update({
-                imgUrl: profileImg,
-              })
-              .where('user.id = :id', { id: checkedId })
-              .execute());
-        } else {
-          profileImg &&
-            (await getRepository(User)
-              .createQueryBuilder()
-              .update({
-                imgUrl:
-                  'https://phovisimgs.s3.ap-northeast-2.amazonaws.com/blank-profile-picture-973460_1280-300x300-1.jpg',
-              })
-              .where('user.id = :id', { id: checkedId })
-              .execute());
-        }
+        profileImg &&
+          (await getRepository(User)
+            .createQueryBuilder()
+            .update({
+              imgUrl: profileImg,
+            })
+            .where('user.id = :id', { id: checkedId })
+            .execute());
+
         res.status(200).send({ profileImg, userId: checkedId, userName });
       } catch (e) {
         res.status(403).send({ message: 'input error' });
