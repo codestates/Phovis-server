@@ -26,11 +26,16 @@ class contentController {
       const { images: imageData } = req.files as contentfile;
 
       // json 데이터 변환
-      const convetTags = JSON.parse(tags) as string[];
+      const convetTags = tags ? (JSON.parse(tags) as string[]) : [];
       const convertLocation = JSON.parse(location) as Locationtype;
-      const convertImages = images.map((el) => {
-        return JSON.parse(el) as Imagetype;
-      });
+      const convertImages = [];
+      if (Array.isArray(images)) {
+        images.forEach((el) => {
+          convertImages.push(JSON.parse(el) as Imagetype);
+        });
+      } else {
+        convertImages.push(JSON.parse(images));
+      }
 
       // image bucket에 먼저 써주기
       let imagesUrls: ConvertImg[] = [];

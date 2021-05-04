@@ -7,10 +7,13 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { User } from './User';
 import { Image } from './Image';
 import { Location } from './Location';
+import { Tag } from './Tag';
 
 @Entity()
 export class Imagecard {
@@ -27,8 +30,13 @@ export class Imagecard {
   @JoinColumn()
   image!: Image;
 
-  @OneToOne(() => Location)
-  @JoinColumn()
+  @ManyToMany(() => Tag, (tag) => tag.imagecard, {
+    cascade: ['insert', 'update'],
+  })
+  @JoinTable()
+  tag!: Tag[];
+
+  @ManyToOne(() => Location, (location) => location.imagecard)
   location!: Location;
 
   @CreateDateColumn({
