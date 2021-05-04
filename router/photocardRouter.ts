@@ -20,11 +20,11 @@ router.post('/', function (req: Request, res: Response, next) {
   });
 });
 
-router.post('/', photocardController.post);
+router.post('/', cpUpload, photocardController.post);
 
 router.get('/', photocardController.get);
 
-// router.put('/', cpUpload, photocardController.put);
+router.put('/', cpUpload, photocardController.put);
 
 // router.delete('/', photocardController.delete);
 

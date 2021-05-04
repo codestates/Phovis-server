@@ -7,9 +7,11 @@ import {
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
+  OneToOne,
 } from 'typeorm';
 import { Imagecard } from './Imagcard';
 import { Content } from './Content';
+import { Option } from './Option';
 
 @Entity()
 export class User {
@@ -104,4 +106,7 @@ export class User {
     },
   })
   bookmark!: Content[];
+
+  @OneToOne(() => Option, (option) => option.user)
+  Option!: Option;
 }
