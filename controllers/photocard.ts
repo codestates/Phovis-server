@@ -187,7 +187,7 @@ class photocardController {
         .innerJoin('imagecard.image', 'images')
         .where('tags.tagName IN (:...tagName)', { tagName: tag })
         .take(Number(req.query.maxnum) || 10)
-        .getMany();
+        .execute();
 
       const resBody = imagecard.map((ele: any) => {
         const { id: photocardId, user, image, ...rest } = ele;
