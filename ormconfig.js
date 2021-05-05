@@ -3,7 +3,7 @@ env.config();
 
 module.exports = {
   type: 'mysql',
-  host: process.env.DATABAES_ENDPOINT,
+  host: process.env.DATABASE_ENDPOINT,
   port: 3306,
   username: 'root',
   password: process.env.DATABASE_PW,
