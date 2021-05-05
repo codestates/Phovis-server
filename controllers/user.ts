@@ -99,9 +99,16 @@ class userController {
           const leftFavor = user.favourite.filter(
             (list) => list.id !== contentId
           );
+          const leftIsFavorUser = content.favourite.filter(
+            (list) => list.id !== checkedId
+          );
           const isLike = leftFavor.length === user.favourite.length;
           user.favourite = isLike ? [...leftFavor, content] : [...leftFavor];
+          content.favourite = isLike
+            ? [...leftIsFavorUser, user]
+            : [...leftIsFavorUser];
           userRepo.save(user);
+          contentRepo.save(content);
           res.status(201).send({ isLike });
         } else {
           res.status(400).send('bad request');
@@ -136,11 +143,18 @@ class userController {
           const leftBookmarks = user.bookmark.filter(
             (list) => list.id !== contentId
           );
+          const leftIsBookmarkUser = content.bookmark.filter(
+            (list) => list.id !== checkedId
+          );
           const isBookmark = leftBookmarks.length === user.bookmark.length;
           user.bookmark = isBookmark
             ? [...leftBookmarks, content]
             : [...leftBookmarks];
+          content.bookmark = isBookmark
+            ? [...leftIsBookmarkUser, user]
+            : [...leftIsBookmarkUser];
           userRepo.save(user);
+          contentRepo.save(content);
           res.status(201).send({ isBookmark });
         } else {
           res.status(400).send('bad request');
