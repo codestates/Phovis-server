@@ -13,14 +13,16 @@ class userController {
     if (!checkedId) {
       res.status(403).send('not authorized');
     } else {
-      const { id } = req.body;
+      const { id } = req.query as { id: string | undefined };
       const userRepo = await getRepository(User);
       try {
-        if (id) {
-          const user = userRepo.findOne(id, { select: ['userName', 'imgUrl'] });
+        if (id !== undefined) {
+          const user = await userRepo.findOne(id, {
+            select: ['userName', 'imgUrl'],
+          });
           res.status(200).send({ ...user });
         } else {
-          const user = userRepo.findOne(checkedId, {
+          const user = await userRepo.findOne(checkedId, {
             select: ['id', 'userName', 'email', 'imgUrl', 'type'],
           });
           if (user) {
@@ -30,7 +32,7 @@ class userController {
           }
         }
       } catch (e) {
-        throw e;
+        res.status(404).send('not found user');
       }
     }
   };
