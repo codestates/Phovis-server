@@ -196,6 +196,7 @@ class contentController {
     if (req.query.id) {
       const contentid = req.query.id;
       try {
+        console.log('asdflkajsd', req.query.id);
         let result = (await getRepository(Content)
           .createQueryBuilder('content')
           .select(['content.id', 'content.title', 'content.description'])

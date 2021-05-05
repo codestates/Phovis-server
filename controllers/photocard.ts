@@ -167,9 +167,10 @@ class photocardController {
 
       res.status(200).send({ data: resBody });
     } else if (Number(req.query.random) === 1) {
+      console.log(Number(req.query.random));
       const tags = (await axios.get('https://localhost:4000/tag')) as any;
 
-      const tag = tags.data.map((el: any) => el.tag_tagName);
+      const tag = tags.data.map((el: any) => el.tag);
 
       const imagecard = await getRepository(Imagecard)
         .createQueryBuilder('imagecard')

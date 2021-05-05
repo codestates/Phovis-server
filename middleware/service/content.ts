@@ -78,7 +78,6 @@ export async function CreateResult(result: any, checkedid?: string | null) {
 
     const { contentCard, image, ...rest } = result[i];
     const { id, userName, imgUrl } = result[i].user;
-    console.log(imgUrl);
     result[i] = {
       ...rest,
       mainimageUrl: image.uri,
@@ -105,7 +104,6 @@ export const transfromContentResult = (
     let itag: any[];
     if (tag.length !== 0) {
       let { tag: tags } = tag[0] as any;
-      console.log(tags);
       itag = tags.map((el: Tag) => el.tagName);
       rest.tag = [...itag];
     }

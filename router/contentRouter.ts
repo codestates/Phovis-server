@@ -2,7 +2,6 @@
 import { contentController } from '../controllers';
 import express, { Request, Response } from 'express';
 import multer from 'multer';
-import * as auth from '../middleware/service/authorize';
 
 const router = express.Router();
 
