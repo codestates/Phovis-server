@@ -119,123 +119,142 @@ class photocardController {
       }
     } catch (err) {
       console.log(err);
-      res.status(400).send({ message: 'Bad request' });
+      res.status(400).send({ message: 'Bad request' }).end();
+      return;
     }
   };
 
   public get = async (req: Request, res: Response) => {
     if (req.query.contentId) {
-      const result = (await getRepository(Content).find({
-        relations: ['tag', 'tag.imagecard'],
-        where: { id: req.query.contentId },
-      })) as any;
+      try {
+        const result = (await getRepository(Content).find({
+          relations: ['tag', 'tag.imagecard'],
+          where: { id: req.query.contentId },
+        })) as any;
 
-      const findkeys = [] as string[];
+        const findkeys = [] as string[];
 
-      if (result[0].tag) {
-        for (let i = 0; i < result[0].tag.length; i++) {
-          result[0].tag[i].imagecard.forEach((el: Imagecard) =>
-            findkeys.push(el.id)
-          );
+        if (result[0].tag) {
+          for (let i = 0; i < result[0].tag.length; i++) {
+            result[0].tag[i].imagecard.forEach((el: Imagecard) =>
+              findkeys.push(el.id)
+            );
+          }
         }
+
+        const imagecard = await getRepository(Imagecard)
+          .createQueryBuilder('imagecard')
+          .select(['imagecard.description', 'imagecard.id'])
+          .addSelect('tags.tagName')
+          .addSelect('images.uri')
+          .addSelect(['user.id', 'user.imgUrl', 'user.userName'])
+          .addSelect(['locations.location', 'locations.lat', 'locations.lng'])
+          .innerJoin('imagecard.location', 'locations')
+          .innerJoin('imagecard.tag', 'tags')
+          .innerJoin('imagecard.image', 'images')
+          .innerJoin('imagecard.user', 'user')
+          .where('imagecard.id IN (:...id)', { id: [...findkeys] })
+          .take(Number(req.query.maxnum) || 10)
+          .getMany();
+
+        const resBody = imagecard.map((ele: any) => {
+          const { id: photocardId, user, image, ...rest } = ele;
+          return {
+            ...rest,
+            profileImage: user.imgUrl,
+            userName: user.userName,
+            userId: user.id,
+            photocardId,
+            tag: ele.tag.map((el: Tag) => el.tagName),
+            imageurl: ele.image.uri,
+          };
+        });
+
+        res.status(200).send({ data: resBody });
+      } catch (err) {
+        console.log(err);
+        res.status(400).send({ message: 'Bad request' }).end();
+        return;
       }
-
-      const imagecard = await getRepository(Imagecard)
-        .createQueryBuilder('imagecard')
-        .select(['imagecard.description', 'imagecard.id'])
-        .addSelect('tags.tagName')
-        .addSelect('images.uri')
-        .addSelect(['user.id', 'user.imgUrl', 'user.userName'])
-        .addSelect(['locations.location', 'locations.lat', 'locations.lng'])
-        .innerJoin('imagecard.location', 'locations')
-        .innerJoin('imagecard.tag', 'tags')
-        .innerJoin('imagecard.image', 'images')
-        .innerJoin('imagecard.user', 'user')
-        .where('imagecard.id IN (:...id)', { id: findkeys })
-        .take(Number(req.query.maxnum) || 10)
-        .getMany();
-
-      const resBody = imagecard.map((ele: any) => {
-        const { id: photocardId, user, image, ...rest } = ele;
-        return {
-          ...rest,
-          profileImage: user.imgUrl,
-          userName: user.userName,
-          userId: user.id,
-          photocardId,
-          tag: ele.tag.map((el: Tag) => el.tagName),
-          imageurl: ele.image.uri,
-        };
-      });
-
-      res.status(200).send({ data: resBody });
     } else if (Number(req.query.random) === 1) {
-      const tags = await getRepository(Content)
-        .createQueryBuilder('content')
-        .select(['tag.tagName'])
-        .addSelect('COUNT(*)', 'count')
-        .innerJoin('content.tag', 'tag')
-        .groupBy('tag.tagName')
-        .orderBy('count', 'DESC')
-        .take(Number(req.query.maxnum) || 5)
-        .execute();
-      const tag = tags.map((el: any) => el.tag_tagName);
+      try {
+        const tags = await getRepository(Content)
+          .createQueryBuilder('content')
+          .select(['tag.tagName'])
+          .addSelect('COUNT(*)', 'count')
+          .innerJoin('content.tag', 'tag')
+          .groupBy('tag.tagName')
+          .orderBy('count', 'DESC')
+          .take(Number(req.query.maxnum) || 5)
+          .execute();
+        const tag = tags.map((el: any) => el.tag_tagName);
 
-      const imagecard = await getRepository(Imagecard)
-        .createQueryBuilder('imagecard')
-        .select(['imagecard.description', 'imagecard.id'])
-        .addSelect('tags.tagName')
-        .addSelect('images.uri')
-        .addSelect(['locations.location', 'locations.lat', 'locations.lng'])
-        .addSelect(['user.id', 'user.imgUrl', 'user.userName'])
-        .innerJoin('imagecard.user', 'user')
-        .innerJoin('imagecard.location', 'locations')
-        .innerJoin('imagecard.tag', 'tags')
-        .innerJoin('imagecard.image', 'images')
-        .where('tags.tagName IN (:...tagName)', { tagName: tag })
-        .take(Number(req.query.maxnum) || 10)
-        .getMany();
+        const imagecard = await getRepository(Imagecard)
+          .createQueryBuilder('imagecard')
+          .select(['imagecard.description', 'imagecard.id'])
+          .addSelect('tags.tagName')
+          .addSelect('images.uri')
+          .addSelect(['locations.location', 'locations.lat', 'locations.lng'])
+          .addSelect(['user.id', 'user.imgUrl', 'user.userName'])
+          .innerJoin('imagecard.user', 'user')
+          .innerJoin('imagecard.location', 'locations')
+          .innerJoin('imagecard.tag', 'tags')
+          .innerJoin('imagecard.image', 'images')
+          .where('tags.tagName IN (:...tagName)', { tagName: [...tag] })
+          .take(Number(req.query.maxnum) || 10)
+          .getMany();
 
-      const resBody = imagecard.map((ele: any) => {
-        const { id: photocardId, user, image, ...rest } = ele;
-        return {
+        const resBody = imagecard.map((ele: any) => {
+          const { id: photocardId, user, image, ...rest } = ele;
+          return {
+            ...rest,
+            profileImage: user.imgUrl,
+            userName: user.userName,
+            userId: user.id,
+            photocardId,
+            tag: ele.tag.map((el: Tag) => el.tagName),
+            imageurl: ele.image.uri,
+          };
+        });
+
+        res.status(200).send({ data: resBody });
+      } catch (err) {
+        console.log(err);
+        res.status(400).send({ message: 'Bad request' }).end();
+        return;
+      }
+    } else if (req.query.photocardId) {
+      try {
+        const imagecard = (await getRepository(Imagecard)
+          .createQueryBuilder('imagecard')
+          .select(['imagecard.description', 'imagecard.id'])
+          .addSelect('tags.tagName')
+          .addSelect('images.uri')
+          .addSelect(['locations.location', 'locations.lat', 'locations.lng'])
+          .addSelect(['user.id', 'user.imgUrl', 'user.userName'])
+          .innerJoin('imagecard.user', 'user')
+          .innerJoin('imagecard.location', 'locations')
+          .innerJoin('imagecard.tag', 'tags')
+          .innerJoin('imagecard.image', 'images')
+          .where('imagecard.id = :id', { id: req.query.photocardId })
+          .getOne()) as any;
+
+        const { id: photocardId, image, user, ...rest } = imagecard;
+        const result = {
           ...rest,
           profileImage: user.imgUrl,
           userName: user.userName,
           userId: user.id,
           photocardId,
-          tag: ele.tag.map((el: Tag) => el.tagName),
-          imageurl: ele.image.uri,
+          tag: imagecard.tag.map((el: Tag) => el.tagName),
+          imageurl: imagecard.image.uri,
         };
-      });
-
-      res.status(200).send({ data: resBody });
-    } else if (req.query.photocardId) {
-      const imagecard = (await getRepository(Imagecard)
-        .createQueryBuilder('imagecard')
-        .select(['imagecard.description', 'imagecard.id'])
-        .addSelect('tags.tagName')
-        .addSelect('images.uri')
-        .addSelect(['locations.location', 'locations.lat', 'locations.lng'])
-        .addSelect(['user.id', 'user.imgUrl', 'user.userName'])
-        .innerJoin('imagecard.user', 'user')
-        .innerJoin('imagecard.location', 'locations')
-        .innerJoin('imagecard.tag', 'tags')
-        .innerJoin('imagecard.image', 'images')
-        .where('imagecard.id = :id', { id: req.query.photocardId })
-        .getOne()) as any;
-
-      const { id: photocardId, image, user, ...rest } = imagecard;
-      const result = {
-        ...rest,
-        profileImage: user.imgUrl,
-        userName: user.userName,
-        userId: user.id,
-        photocardId,
-        tag: imagecard.tag.map((el: Tag) => el.tagName),
-        imageurl: imagecard.image.uri,
-      };
-      res.status(200).send({ ...result });
+        res.status(200).send({ ...result });
+      } catch (err) {
+        console.log(err);
+        res.status(400).send({ message: 'Bad request' }).end();
+        return;
+      }
     }
   };
 
@@ -373,6 +392,7 @@ class photocardController {
     } catch (err) {
       console.log(err);
       res.status(400).send({ message: 'Bad request' }).end();
+      return;
     }
   };
 }
