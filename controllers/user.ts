@@ -13,25 +13,26 @@ class userController {
     if (!checkedId) {
       res.status(403).send('not authorized');
     } else {
+      const { id } = req.query as { id: string | undefined };
+      const userRepo = await getRepository(User);
       try {
-        const user = await getRepository(User)
-          .createQueryBuilder('user')
-          .select([
-            'user.id',
-            'user.userName',
-            'user.email',
-            'user.imgUrl',
-            'user.type',
-          ])
-          .where('user.id = :id', { id: checkedId })
-          .getOne();
-        if (user) {
+        if (id !== undefined) {
+          const user = await userRepo.findOne(id, {
+            select: ['userName', 'imgUrl'],
+          });
           res.status(200).send({ ...user });
         } else {
-          res.status(404).send('not found user');
+          const user = await userRepo.findOne(checkedId, {
+            select: ['id', 'userName', 'email', 'imgUrl', 'type'],
+          });
+          if (user) {
+            res.status(200).send({ ...user });
+          } else {
+            res.status(404).send('not found user');
+          }
         }
       } catch (e) {
-        throw e;
+        res.status(404).send('not found user');
       }
     }
   };
@@ -99,9 +100,16 @@ class userController {
           const leftFavor = user.favourite.filter(
             (list) => list.id !== contentId
           );
+          const leftIsFavorUser = content.favourite.filter(
+            (list) => list.id !== checkedId
+          );
           const isLike = leftFavor.length === user.favourite.length;
           user.favourite = isLike ? [...leftFavor, content] : [...leftFavor];
+          content.favourite = isLike
+            ? [...leftIsFavorUser, user]
+            : [...leftIsFavorUser];
           userRepo.save(user);
+          contentRepo.save(content);
           res.status(201).send({ isLike });
         } else {
           res.status(400).send('bad request');
@@ -136,11 +144,18 @@ class userController {
           const leftBookmarks = user.bookmark.filter(
             (list) => list.id !== contentId
           );
+          const leftIsBookmarkUser = content.bookmark.filter(
+            (list) => list.id !== checkedId
+          );
           const isBookmark = leftBookmarks.length === user.bookmark.length;
           user.bookmark = isBookmark
             ? [...leftBookmarks, content]
             : [...leftBookmarks];
+          content.bookmark = isBookmark
+            ? [...leftIsBookmarkUser, user]
+            : [...leftIsBookmarkUser];
           userRepo.save(user);
+          contentRepo.save(content);
           res.status(201).send({ isBookmark });
         } else {
           res.status(400).send('bad request');

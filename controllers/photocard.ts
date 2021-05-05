@@ -178,9 +178,17 @@ class photocardController {
       }
     } else if (Number(req.query.random) === 1) {
       try {
-        const tags = (await axios.get('https://localhost:4000/tag')) as any;
+        const tags = await getRepository(Content)
+          .createQueryBuilder('content')
+          .select(['tag.tagName'])
+          .addSelect('COUNT(*)', 'count')
+          .innerJoin('content.tag', 'tag')
+          .groupBy('tag.tagName')
+          .orderBy('count', 'DESC')
+          .take(Number(req.query.maxnum) || 5)
+          .execute();
+        const tag = tags.map((el: any) => el.tag_tagName);
 
-        const tag = tags.data.map((el: any) => el.tag);
         const imagecard = await getRepository(Imagecard)
           .createQueryBuilder('imagecard')
           .select(['imagecard.description', 'imagecard.id'])
