@@ -13,22 +13,21 @@ class userController {
     if (!checkedId) {
       res.status(403).send('not authorized');
     } else {
+      const { id } = req.body;
+      const userRepo = await getRepository(User);
       try {
-        const user = await getRepository(User)
-          .createQueryBuilder('user')
-          .select([
-            'user.id',
-            'user.userName',
-            'user.email',
-            'user.imgUrl',
-            'user.type',
-          ])
-          .where('user.id = :id', { id: checkedId })
-          .getOne();
-        if (user) {
+        if (id) {
+          const user = userRepo.findOne(id, { select: ['userName', 'imgUrl'] });
           res.status(200).send({ ...user });
         } else {
-          res.status(404).send('not found user');
+          const user = userRepo.findOne(checkedId, {
+            select: ['id', 'userName', 'email', 'imgUrl', 'type'],
+          });
+          if (user) {
+            res.status(200).send({ ...user });
+          } else {
+            res.status(404).send('not found user');
+          }
         }
       } catch (e) {
         throw e;

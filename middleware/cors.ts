@@ -4,7 +4,9 @@ const corsOption: cors.CorsOptions = {
     'http://localhost:3000',
     'https://localhost:3000',
     'https://phovis.ga',
-    'http://phovis.ga',
+    'https://www.phovis.ga',
+    'http://www.phovis.ga',
+    /\.phovis\.ga$/,
   ], // origin front web server
   methods: ['POST', 'GET', 'PUT', 'OPTIONS', 'DELETE'],
   credentials: true,
