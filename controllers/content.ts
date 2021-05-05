@@ -196,7 +196,6 @@ class contentController {
     if (req.query.id) {
       const contentid = req.query.id;
       try {
-        console.log('asdflkajsd', req.query.id);
         let result = (await getRepository(Content)
           .createQueryBuilder('content')
           .select(['content.id', 'content.title', 'content.description'])
@@ -268,31 +267,37 @@ class contentController {
         res.status(200).send({ result }).end();
       } catch (err) {
         console.log(err);
-        res.status(400).send({ message: 'Bad Request' }).end();
+        res.status(400).send({ message: 'Bad request' }).end();
         return;
       }
     } else if (req.query.tag) {
-      const tag = req.query.tag as string;
-      const tags = tag.split(',');
+      try {
+        const tag = req.query.tag as string;
+        const tags = tag.split(',');
 
-      let result = (await getRepository(Content)
-        .createQueryBuilder('content')
-        .select(['content.id', 'content.title', 'content.description'])
-        .addSelect(['user.userName', 'user.id', 'user.imgUrl'])
-        .addSelect('image.uri')
-        .addSelect(['contentCard.description', 'contentCard.id'])
-        .innerJoin('content.tag', 'tag')
-        .innerJoin('content.user', 'user')
-        .innerJoin('content.image', 'image')
-        .innerJoin('content.contentCard', 'contentCard')
-        .where('tag.tagName IN (:...tagName)', { tagName: [...tags] })
-        .take(limit)
-        .getMany()) as any;
+        let result = (await getRepository(Content)
+          .createQueryBuilder('content')
+          .select(['content.id', 'content.title', 'content.description'])
+          .addSelect(['user.userName', 'user.id', 'user.imgUrl'])
+          .addSelect('image.uri')
+          .addSelect(['contentCard.description', 'contentCard.id'])
+          .innerJoin('content.tag', 'tag')
+          .innerJoin('content.user', 'user')
+          .innerJoin('content.image', 'image')
+          .innerJoin('content.contentCard', 'contentCard')
+          .where('tag.tagName IN (:...tagName)', { tagName: [...tags] })
+          .take(limit)
+          .getMany()) as any;
 
-      result = await CreateResult(result, req.checkedId as string);
+        result = await CreateResult(result, req.checkedId as string);
 
-      res.status(200).send({ maxnum: limit, data: result }).end;
-      return;
+        res.status(200).send({ maxnum: limit, data: result }).end;
+        return;
+      } catch (err) {
+        console.log(err);
+        res.status(400).send({ message: 'Bad request' }).end();
+        return;
+      }
     } else if (req.query.filter || req.query.userId) {
       let result = [];
       if (!req.query.filter) {
@@ -312,49 +317,63 @@ class contentController {
             .getMany()) as any;
         } catch (err) {
           console.log(err);
+          res.status(400).send({ message: 'Bad request' }).end();
+          return;
         }
       } else if (req.query.filter === 'bookmark') {
-        result = (await getRepository(Content)
-          .createQueryBuilder('content')
-          .select(['content.id', 'content.title', 'content.description'])
-          .addSelect(['image.uri', 'image.id'])
-          .addSelect(['contentCard.description', 'contentCard.id'])
-          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
-          .innerJoin('content.user', 'user')
-          .innerJoinAndSelect(
-            'user.bookmark',
-            'bookmark',
-            'bookmark.user = :id',
-            {
-              id: req.query.userId,
-            }
-          )
-          .innerJoin('content.image', 'image')
-          .innerJoin('content.tag', 'tag')
-          .innerJoin('content.contentCard', 'contentCard')
-          .take(limit)
-          .getMany()) as any;
+        try {
+          result = (await getRepository(Content)
+            .createQueryBuilder('content')
+            .select(['content.id', 'content.title', 'content.description'])
+            .addSelect(['image.uri', 'image.id'])
+            .addSelect(['contentCard.description', 'contentCard.id'])
+            .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
+            .innerJoin('content.user', 'user')
+            .innerJoinAndSelect(
+              'user.bookmark',
+              'bookmark',
+              'bookmark.user = :id',
+              {
+                id: req.query.userId,
+              }
+            )
+            .innerJoin('content.image', 'image')
+            .innerJoin('content.tag', 'tag')
+            .innerJoin('content.contentCard', 'contentCard')
+            .take(limit)
+            .getMany()) as any;
+        } catch (err) {
+          console.log(err);
+          res.status(400).send({ message: 'Bad request' }).end();
+          return;
+        }
       } else if (req.query.filter === 'like') {
-        result = (await getRepository(Content)
-          .createQueryBuilder('content')
-          .select(['content.id', 'content.title', 'content.description'])
-          .addSelect(['image.uri', 'image.id'])
-          .addSelect(['contentCard.description', 'contentCard.id'])
-          .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
-          .innerJoin('content.user', 'user')
-          .innerJoinAndSelect(
-            'user.favourite',
-            'favourite',
-            'favourite.user = :id',
-            {
-              id: req.query.userId,
-            }
-          )
-          .innerJoin('content.image', 'image')
-          .innerJoin('content.tag', 'tag')
-          .innerJoin('content.contentCard', 'contentCard')
-          .take(limit)
-          .getMany()) as any;
+        try {
+          result = (await getRepository(Content)
+            .createQueryBuilder('content')
+            .select(['content.id', 'content.title', 'content.description'])
+            .addSelect(['image.uri', 'image.id'])
+            .addSelect(['contentCard.description', 'contentCard.id'])
+            .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
+            .innerJoin('content.user', 'user')
+            .innerJoinAndSelect(
+              'user.favourite',
+              'favourite',
+              'favourite.user = :id',
+              {
+                id: req.query.userId,
+              }
+            )
+            .innerJoin('content.image', 'image')
+            .innerJoin('content.tag', 'tag')
+            .innerJoin('content.contentCard', 'contentCard')
+            .take(limit)
+            .getMany()) as any;
+        } catch (err) {
+          console.log(err);
+          res.status(400).send({ message: 'Bad request' }).end();
+          return;
+        }
       }
       if (!result) {
         res.status(400).send({ message: 'Bad Request' }).end();
@@ -573,9 +592,11 @@ class contentController {
       } catch (err) {
         console.log(err);
         res.status(400).send({ message: 'Bad request' }).end();
+        return;
       }
     } else {
       res.status(400).send({ message: 'Bad request' }).end();
+      return;
     }
   };
 
@@ -600,7 +621,9 @@ class contentController {
         .where('id = :id', { id: req.query.contentid })
         .execute();
     } catch (err) {
-      res.status(400).send({ message: 'Bad Request' });
+      console.log(err);
+      res.status(400).send({ message: 'Bad request' }).end();
+      return;
     }
     res.status(205).send({ message: 'ok' });
   };
