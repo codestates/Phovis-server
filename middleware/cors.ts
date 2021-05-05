@@ -6,7 +6,7 @@ const corsOption: cors.CorsOptions = {
     'https://phovis.ga',
     'http://phovis.ga',
   ], // origin front web server
-  methods: ['POST', 'GET', 'PUT', 'OPTIONS'],
+  methods: ['POST', 'GET', 'PUT', 'OPTIONS', 'DELETE'],
   credentials: true,
 };
 

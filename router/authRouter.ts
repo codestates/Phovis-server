@@ -12,4 +12,5 @@ router.post('/password', authController.checkPW);
 router.put('/password', authController.updatePW);
 router.get('/token', authController.requestToken);
 router.put('/option', authController.updateOption);
+router.delete('/signout', authController.signOut);
 export default router;
