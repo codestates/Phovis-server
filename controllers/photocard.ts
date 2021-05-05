@@ -21,7 +21,10 @@ class photocardController {
       let { description } = image ? JSON.parse(image) : '';
 
       let uri = imageData ? await uploadToS3(imageData[0]) : '';
-
+      if (uri === '' || uri === 'worng data') {
+        res.status(400).send({ message: 'worng data' }).end();
+        return;
+      }
       const imageUrl = {
         uri,
         name: imageData![0].originalname,
@@ -167,7 +170,6 @@ class photocardController {
 
       res.status(200).send({ data: resBody });
     } else if (Number(req.query.random) === 1) {
-      console.log(Number(req.query.random));
       const tags = (await axios.get('https://localhost:4000/tag')) as any;
 
       const tag = tags.data.map((el: any) => el.tag);
