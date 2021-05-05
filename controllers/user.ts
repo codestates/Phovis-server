@@ -91,10 +91,11 @@ class userController {
       try {
         const userRepo = await getRepository(User);
         const contentRepo = await getRepository(Content);
-        const content = await contentRepo.findOne({ id: contentId });
-        const user = await userRepo.findOne({
+        const content = await contentRepo.findOne(contentId, {
           relations: ['favourite'],
-          where: { id: checkedId },
+        });
+        const user = await userRepo.findOne(checkedId, {
+          relations: ['favourite'],
         });
         if (user && content) {
           const leftFavor = user.favourite.filter(
@@ -135,11 +136,13 @@ class userController {
       try {
         const userRepo = await getRepository(User);
         const contentRepo = await getRepository(Content);
-        const content = await contentRepo.findOne({ id: contentId });
-        const user = await userRepo.findOne({
+        const user = await userRepo.findOne(checkedId, {
           relations: ['bookmark'],
-          where: { id: checkedId },
         });
+        const content = await contentRepo.findOne(contentId, {
+          relations: ['bookmark'],
+        });
+
         if (user && content) {
           const leftBookmarks = user.bookmark.filter(
             (list) => list.id !== contentId
@@ -161,7 +164,7 @@ class userController {
           res.status(400).send('bad request');
         }
       } catch (e) {
-        console.log(e.message);
+        console.log(e);
         res.status(400).send('bad request');
       }
     }
@@ -178,13 +181,11 @@ class userController {
       }
       try {
         const userRepo = await getRepository(User);
-        const follower = await userRepo.findOne({
+        const follower = await userRepo.findOne(checkedId, {
           relations: ['following'],
-          where: { id: checkedId },
         });
-        const followee = await userRepo.findOne({
+        const followee = await userRepo.findOne(userId, {
           relations: ['follower'],
-          where: { id: userId },
         });
         if (follower && followee) {
           const leftFollowee = follower.following.filter(
