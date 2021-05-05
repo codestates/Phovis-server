@@ -20,7 +20,7 @@ router.post('/', function (req: Request, res: Response, next) {
   });
 });
 
-router.post('/', cpUpload, photocardController.post);
+router.post('/', photocardController.post);
 
 router.get('/', photocardController.get);
 
