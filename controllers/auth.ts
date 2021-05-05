@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import cryptoPW from '@middleware/service/customCrypto';
 import { signToken } from '@middleware/service/tokenController';
 import { User } from '@entity/User';
+import qs from 'qs';
 import { Option } from '@entity/Option';
 import {
   loginReqeustBody,
@@ -191,7 +192,10 @@ class authController {
           .send({ accessToken });
       } else {
         // 기존에 없는 유저라면 새로 유저 등록
-        const customPW = crypto.randomBytes(64).toString();
+        const customPW = crypto
+          .createHash('sha256')
+          .update(data.sub)
+          .digest('hex');
         const { identifiers } = await getRepository(User)
           .createQueryBuilder()
           .insert()
@@ -233,79 +237,94 @@ class authController {
   // 카카오 회원가입
   public kakao = async (req: Request, res: Response): Promise<void> => {
     // 이메일이 선택임 아무거나 넣어야 할수도 있음
-    const { kakaoCode } = req.body;
-    if (kakaoCode) res.status(404).send('bad request');
-    const kakaoTokenData = await axios.post<kakaoTokenRes>(
-      'https://kauth.kakao.com/oauth/token',
-      {
-        grant_type: 'authorization_code',
-        client_id: process.env.KAKAO_CLIENT_ID as string,
-        redirect_uri: 'https//localhost:3000/auth/kakao',
-        code: kakaoCode,
-      },
-      { headers: { application: 'x-www-form-urlencoded;charset=utf-8' } }
-    );
-    if (!kakaoTokenData) res.status(403).send('Not authentication Kakao');
-    const { access_token } = kakaoTokenData.data;
-    const { data } = await axios.post<kakaoUserRes>(
-      'https://kapi.kakao.com/v2/user/me',
-      {
-        property_keys: ['kakao_account.profile', 'kakao_account.email'],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
-      }
-    );
-    const user = await getRepository(User)
-      .createQueryBuilder('user')
-      .where('user.id = :id', { id: `${data.id}` })
-      .getOne();
-    if (user) {
-      const { accessToken, refreshToken } = signToken(user.id);
-      res
-        .status(200)
-        .cookie('refreshToken', refreshToken, {
-          maxAge: 864000,
-          secure: true,
-          sameSite: 'none',
-        })
-        .send({ accessToken });
-    } else {
-      const customPW = crypto.randomBytes(64).toString();
-      const { identifiers } = await getRepository(User)
-        .createQueryBuilder()
-        .insert()
-        .into(User)
-        .values([
-          {
-            id: `${data.id}`,
-            userName: data.kakao_account.profile.nickname,
-            imgUrl: data.kakao_account.profile.profile_image_url,
-            email: data.kakao_account.email || '',
-            password: customPW,
-            type: 'kakao',
+    try {
+      const { kakaoCode } = req.body;
+      if (!kakaoCode) res.status(404).send('bad request');
+      const kakaoTokenData = await axios.post<kakaoTokenRes>(
+        'https://kauth.kakao.com/oauth/token',
+        qs.stringify({
+          grant_type: 'authorization_code',
+          client_id: process.env.KAKAO_CLIENT_ID as string,
+          redirect_uri: 'http://localhost:3000/auth/kakao',
+          code: kakaoCode,
+          client_secret: process.env.KAKAO_CLIENT_SECRET as string,
+        }),
+        {
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded;charset=utf-8',
           },
-        ])
-        .execute();
-      const { id } = identifiers[0] as User;
-      const option = new Option();
-      option.user = identifiers[0] as User;
-      await getRepository(Option).save(option);
+        }
+      );
+      if (!kakaoTokenData) res.status(403).send('Not authentication Kakao');
+      const { access_token } = kakaoTokenData.data;
+      const { data } = await axios.post<kakaoUserRes>(
+        'https://kapi.kakao.com/v2/user/me',
+        {
+          property_keys: ['kakao_account.profile', 'kakao_account.email'],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
+      );
+      const user = await getRepository(User)
+        .createQueryBuilder('user')
+        .where('user.id = :id', { id: `${data.id}` })
+        .getOne();
+      if (user) {
+        const { accessToken, refreshToken } = signToken(user.id);
+        res
+          .status(200)
+          .cookie('refreshToken', refreshToken, {
+            maxAge: 864000,
+            secure: true,
+            sameSite: 'none',
+          })
+          .send({ accessToken });
+      } else {
+        const customPW = crypto
+          .createHash('sha256')
+          .update(data.id.toString())
+          .digest('hex');
+        const { identifiers } = await getRepository(User)
+          .createQueryBuilder()
+          .insert()
+          .into(User)
+          .values([
+            {
+              id: `${data.id}`,
+              userName: data.kakao_account.profile.nickname,
+              imgUrl:
+                data.kakao_account.profile.profile_image_url ||
+                'https://phovisimgs.s3.ap-northeast-2.amazonaws.com/blank-profile-picture-973460_1280-300x300-1.jpg',
+              email: data.kakao_account.email || '',
+              password: customPW,
+              type: 'kakao',
+            },
+          ])
+          .execute();
+        const { id } = identifiers[0] as User;
+        const option = new Option();
+        option.user = identifiers[0] as User;
+        await getRepository(Option).save(option);
 
-      const user = await getRepository(User).findOneOrFail(id);
-      user.Option = option;
-      await getRepository(User).save(user);
-      const { accessToken, refreshToken } = signToken(id);
-      res
-        .status(201)
-        .cookie('refreshToken', refreshToken, {
-          maxAge: 864000,
-          secure: true,
-          sameSite: 'none',
-        })
-        .send({ accessToken });
+        const user = await getRepository(User).findOneOrFail(id);
+        user.Option = option;
+        await getRepository(User).save(user);
+        const { accessToken, refreshToken } = signToken(id);
+        res
+          .status(201)
+          .cookie('refreshToken', refreshToken, {
+            maxAge: 864000,
+            secure: true,
+            sameSite: 'none',
+          })
+          .send({ accessToken });
+      }
+    } catch (e) {
+      console.log(e);
+      res.status(404).send('bad');
     }
   };
   public updateOption = async (req: Request, res: Response): Promise<void> => {
@@ -347,6 +366,21 @@ class authController {
         } catch (e) {
           res.status(400).send(`bad Request ${e.message}`);
         }
+      }
+    }
+  };
+  public signOut = async (req: Request, res: Response): Promise<void> => {
+    const { checkedId } = req;
+    if (!checkedId) {
+      res.status(401).send('not authorized');
+    } else {
+      const { key } = req.body;
+      if (req.session.token === key) {
+        const userRepo = await getRepository(User);
+        await userRepo.softDelete(checkedId);
+        res.status(201).send({ message: 'ok' });
+      } else {
+        res.status(400).send('bad Request');
       }
     }
   };
