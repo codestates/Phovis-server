@@ -20,7 +20,9 @@ export class Imagecard {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   description?: string;
 
   @ManyToOne(() => User, (user) => user.imagecards)
