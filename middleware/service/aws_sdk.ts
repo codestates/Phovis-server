@@ -2,7 +2,6 @@ import * as AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 import * as multer from 'multer';
-import fs from 'fs';
 
 dotenv.config();
 
@@ -35,7 +34,7 @@ export const uploadToS3 = async (
     return `https://${BUCKET}.s3.ap-northeast-2.amazonaws.com/${name}.${fileExtension}`;
   } catch (err) {
     console.log(err);
-    return 'wrong data';
+    throw 'wrong data';
   }
 };
 

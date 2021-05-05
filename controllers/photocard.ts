@@ -21,7 +21,10 @@ class photocardController {
       let { description } = image ? JSON.parse(image) : '';
 
       let uri = imageData ? await uploadToS3(imageData[0]) : '';
-
+      if (uri === '' || uri === 'worng data') {
+        res.status(400).send({ message: 'worng data' }).end();
+        return;
+      }
       const imageUrl = {
         uri,
         name: imageData![0].originalname,
@@ -191,7 +194,7 @@ class photocardController {
         .innerJoin('imagecard.image', 'images')
         .where('tags.tagName IN (:...tagName)', { tagName: tag })
         .take(Number(req.query.maxnum) || 10)
-        .getMany();
+        .execute();
 
       const resBody = imagecard.map((ele: any) => {
         const { id: photocardId, user, image, ...rest } = ele;
