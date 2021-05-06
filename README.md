@@ -1,6 +1,23 @@
 # Awesome Project Build with TypeORM
 
+Phovis client를 위한 Phovis server입니다.
+
 # Phovis App (Recommend Photo Visiting site)
+
+REST API
+
+- USER SIGH IN / SIGN OUT/ LOGIN / LOGOUT
+
+- PHOTCARD GET / POST / PUT / DELETE
+
+- content GET / POST / PUT / DELETE 
+
+- BookMark PUT
+
+- Favourite PUT
+
+- Tag GET
+
 
 ## Main Function
 
@@ -16,9 +33,18 @@
 
 ## stack
 
-Express (https, fs)
-axios(REST API)
-jwt(token generate)
+
+>Express (https, fs)
+>
+>axios(REST API)
+>
+>aws-sdk(AWS S3)
+>
+>jwt(token generate)
+>
+>Typeorm (Orm)
+>
+>mysql(database)
 
 ## start APP
 
