@@ -13,9 +13,8 @@ class tagController {
         .innerJoin('content.tag', 'tag')
         .groupBy('tag.tagName')
         .orderBy('count', 'DESC')
-        .take(Number(req.query.maxnum) || 5)
+        .limit(Number(req.query.maxnum) || 5)
         .execute();
-      console.log('here', Number(req.query.maxnum));
 
       for (let i = 0; i < result.length; i++) {
         const { tag_tagName, count, ...rest } = result[i];

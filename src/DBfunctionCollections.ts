@@ -37,6 +37,9 @@ export const insertJoinColumn = function (
 
 export const transformInstance = (seed: any[], entity: any, fnc = create) => {
   return seed.map((el): any => {
+    if (Array.isArray(el)) {
+      return transformInstance(el, entity);
+    }
     const instance: typeof entity = fnc(entity);
     for (const key in el) {
       instance[key] = el[key];
