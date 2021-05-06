@@ -180,7 +180,7 @@ class contentController {
         .leftJoin('location.content', 'content')
         .where('location.id = :id', { id: locationid[0].id })
         .getOne()) as Location;
-
+      console.log(locations);
       //보내 줘야할 객체 생성
       result = transfromContentResult(result, contentCards, tag, locations);
 
@@ -266,8 +266,8 @@ class contentController {
           .andWhere('user.id = :userid', { userid: req.checkedId })
           .getOne();
 
-        result.islike = likeinfo ? true : false;
-        result.isbookmark = bookmark ? true : false;
+        result.isLike = likeinfo ? true : false;
+        result.isBookmark = bookmark ? true : false;
         result.like = like ? like.favouriteCount : 0;
         //보내 줘야할 객체 생성
         result = transfromContentResult(result, contentCards, tag, locations);
