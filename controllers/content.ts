@@ -205,7 +205,6 @@ class contentController {
           .innerJoin('content.image', 'image')
           .where('content.id = :id', { id: contentid })
           .getOne()) as any;
-
         if (!result) {
           res.status(400).send({ message: 'Bad request' }).end();
           return;
@@ -326,26 +325,23 @@ class contentController {
         }
       } else if (req.query.filter === 'bookmark') {
         try {
-          result = (await getRepository(Content)
-            .createQueryBuilder('content')
-            .select(['content.id', 'content.title', 'content.description'])
-            .addSelect(['image.uri', 'image.id'])
-            .addSelect(['contentCard.description', 'contentCard.id'])
-            .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
-            .innerJoin('content.user', 'user')
-            .innerJoinAndSelect(
-              'user.bookmark',
-              'bookmark',
-              'bookmark.user = :id',
-              {
-                id: req.query.userId,
-              }
-            )
-            .innerJoin('content.image', 'image')
-            .innerJoin('content.tag', 'tag')
-            .innerJoin('content.contentCard', 'contentCard')
-            .take(limit)
-            .getMany()) as any;
+          const {
+            checkedId,
+            query: { userId },
+          } = req;
+          const id = userId ? userId : checkedId;
+          if (id) {
+            const user = await getRepository(User).findOne({
+              relations: [
+                'bookmark',
+                'bookmark.contentCard',
+                'bookmark.image',
+                'bookmark.user',
+              ],
+              where: { id },
+            });
+            result = user ? user.bookmark : [];
+          }
         } catch (err) {
           console.log(err);
           res.status(400).send({ message: 'Bad request' }).end();
@@ -353,26 +349,23 @@ class contentController {
         }
       } else if (req.query.filter === 'like') {
         try {
-          result = (await getRepository(Content)
-            .createQueryBuilder('content')
-            .select(['content.id', 'content.title', 'content.description'])
-            .addSelect(['image.uri', 'image.id'])
-            .addSelect(['contentCard.description', 'contentCard.id'])
-            .addSelect(['user.id', 'user.userName', 'user.imgUrl'])
-            .innerJoin('content.user', 'user')
-            .innerJoinAndSelect(
-              'user.favourite',
-              'favourite',
-              'favourite.user = :id',
-              {
-                id: req.query.userId,
-              }
-            )
-            .innerJoin('content.image', 'image')
-            .innerJoin('content.tag', 'tag')
-            .innerJoin('content.contentCard', 'contentCard')
-            .take(limit)
-            .getMany()) as any;
+          const {
+            checkedId,
+            query: { userId },
+          } = req;
+          const id = userId ? userId : checkedId;
+          if (id) {
+            const user = await getRepository(User).findOne({
+              relations: [
+                'favourite',
+                'favourite.contentCard',
+                'favourite.image',
+                'favourite.user',
+              ],
+              where: { id },
+            });
+            result = user ? user.favourite : [];
+          }
         } catch (err) {
           console.log(err);
           res.status(400).send({ message: 'Bad request' }).end();

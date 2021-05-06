@@ -1,13 +1,14 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class PostRefactoring1620092921131 implements MigrationInterface {
-    name = 'PostRefactoring1620092921131'
+export class PostRefactoring1620317887563 implements MigrationInterface {
+    name = 'PostRefactoring1620317887563'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query("CREATE TABLE `option` (`id` int NOT NULL AUTO_INCREMENT, `isFavourite` tinyint NOT NULL, `isBookmark` tinyint NOT NULL, `isFollow` tinyint NOT NULL, `isEmail` tinyint NOT NULL, `createdAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), `updatedAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), `userId` varchar(36) NULL, UNIQUE INDEX `REL_df5a78c69a6b0d2f7786cc6257` (`userId`), PRIMARY KEY (`id`)) ENGINE=InnoDB");
         await queryRunner.query("CREATE TABLE `user` (`id` varchar(36) NOT NULL, `userName` varchar(255) NOT NULL, `email` varchar(255) NOT NULL, `password` varchar(255) NOT NULL, `type` varchar(255) NOT NULL, `imgUrl` varchar(255) NOT NULL, `createdAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), `updatedAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (`id`)) ENGINE=InnoDB");
         await queryRunner.query("CREATE TABLE `image` (`id` int NOT NULL AUTO_INCREMENT, `uri` varchar(255) NULL, `type` varchar(255) NULL, `createdAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), `updatedAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (`id`)) ENGINE=InnoDB");
         await queryRunner.query("CREATE TABLE `location` (`id` int NOT NULL AUTO_INCREMENT, `location` varchar(255) NULL, `lat` int NULL, `lng` int NULL, `createdAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), `updatedAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (`id`)) ENGINE=InnoDB");
-        await queryRunner.query("CREATE TABLE `imagecard` (`id` varchar(36) NOT NULL, `description` varchar(255) NOT NULL, `createdAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), `updatedAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), `userId` varchar(36) NULL, `imageId` int NULL, `locationId` int NULL, UNIQUE INDEX `REL_25505b3c411138e04bf63123a6` (`imageId`), PRIMARY KEY (`id`)) ENGINE=InnoDB");
+        await queryRunner.query("CREATE TABLE `imagecard` (`id` varchar(36) NOT NULL, `description` varchar(255) NULL, `createdAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), `updatedAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), `userId` varchar(36) NULL, `imageId` int NULL, `locationId` int NULL, UNIQUE INDEX `REL_25505b3c411138e04bf63123a6` (`imageId`), PRIMARY KEY (`id`)) ENGINE=InnoDB");
         await queryRunner.query("CREATE TABLE `tag` (`id` int NOT NULL AUTO_INCREMENT, `tagName` varchar(255) NOT NULL, `createdAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), `updatedAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (`id`)) ENGINE=InnoDB");
         await queryRunner.query("CREATE TABLE `content_card` (`id` varchar(36) NOT NULL, `description` varchar(255) NOT NULL, `createdAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), `updatedAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), `imageId` int NULL, `contentId` varchar(36) NULL, UNIQUE INDEX `REL_d9613d6e3cdcbb672c75ee1a66` (`imageId`), PRIMARY KEY (`id`)) ENGINE=InnoDB");
         await queryRunner.query("CREATE TABLE `content` (`id` varchar(36) NOT NULL, `title` varchar(255) NULL, `description` varchar(500) NULL, `createdAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), `updatedAt` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), `userId` varchar(36) NULL, `imageId` int NULL, UNIQUE INDEX `REL_cd03caa6e34f3c76d9f1039353` (`imageId`), PRIMARY KEY (`id`)) ENGINE=InnoDB");
@@ -18,6 +19,7 @@ export class PostRefactoring1620092921131 implements MigrationInterface {
         await queryRunner.query("CREATE TABLE `imagecard_tag_tag` (`imagecardId` varchar(36) NOT NULL, `tagId` int NOT NULL, INDEX `IDX_004cec589a3f84432567ee1396` (`imagecardId`), INDEX `IDX_bf694fb3d25d172fbeaa31d15c` (`tagId`), PRIMARY KEY (`imagecardId`, `tagId`)) ENGINE=InnoDB");
         await queryRunner.query("CREATE TABLE `tag_location_location` (`tagId` int NOT NULL, `locationId` int NOT NULL, INDEX `IDX_2f6f4113049bc9140158bb1a0c` (`tagId`), INDEX `IDX_080989334025b8fc6e4bf3a2fc` (`locationId`), PRIMARY KEY (`tagId`, `locationId`)) ENGINE=InnoDB");
         await queryRunner.query("CREATE TABLE `content_tag_tag` (`contentId` varchar(36) NOT NULL, `tagId` int NOT NULL, INDEX `IDX_02dff9435c8ec4dcfbf5217b50` (`contentId`), INDEX `IDX_5257b52b6d5641add91de83e94` (`tagId`), PRIMARY KEY (`contentId`, `tagId`)) ENGINE=InnoDB");
+        await queryRunner.query("ALTER TABLE `option` ADD CONSTRAINT `FK_df5a78c69a6b0d2f7786cc62570` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION");
         await queryRunner.query("ALTER TABLE `imagecard` ADD CONSTRAINT `FK_3d537956c7ea11bb8ee239e24f2` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION");
         await queryRunner.query("ALTER TABLE `imagecard` ADD CONSTRAINT `FK_25505b3c411138e04bf63123a65` FOREIGN KEY (`imageId`) REFERENCES `image`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION");
         await queryRunner.query("ALTER TABLE `imagecard` ADD CONSTRAINT `FK_1688ec3dd5b4545173a167b8ba3` FOREIGN KEY (`locationId`) REFERENCES `location`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION");
@@ -63,6 +65,7 @@ export class PostRefactoring1620092921131 implements MigrationInterface {
         await queryRunner.query("ALTER TABLE `imagecard` DROP FOREIGN KEY `FK_1688ec3dd5b4545173a167b8ba3`");
         await queryRunner.query("ALTER TABLE `imagecard` DROP FOREIGN KEY `FK_25505b3c411138e04bf63123a65`");
         await queryRunner.query("ALTER TABLE `imagecard` DROP FOREIGN KEY `FK_3d537956c7ea11bb8ee239e24f2`");
+        await queryRunner.query("ALTER TABLE `option` DROP FOREIGN KEY `FK_df5a78c69a6b0d2f7786cc62570`");
         await queryRunner.query("DROP INDEX `IDX_5257b52b6d5641add91de83e94` ON `content_tag_tag`");
         await queryRunner.query("DROP INDEX `IDX_02dff9435c8ec4dcfbf5217b50` ON `content_tag_tag`");
         await queryRunner.query("DROP TABLE `content_tag_tag`");
@@ -94,6 +97,8 @@ export class PostRefactoring1620092921131 implements MigrationInterface {
         await queryRunner.query("DROP TABLE `location`");
         await queryRunner.query("DROP TABLE `image`");
         await queryRunner.query("DROP TABLE `user`");
+        await queryRunner.query("DROP INDEX `REL_df5a78c69a6b0d2f7786cc6257` ON `option`");
+        await queryRunner.query("DROP TABLE `option`");
     }
 
 }
