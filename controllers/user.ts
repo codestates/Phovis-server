@@ -26,7 +26,10 @@ class userController {
             select: ['id', 'userName', 'email', 'imgUrl', 'type'],
           });
           if (user) {
-            res.status(200).send({ ...user });
+            const { id, userName, email, imgUrl, type } = user;
+            res
+              .status(200)
+              .send({ id, userName, email, profileImg: imgUrl, type });
           } else {
             res.status(404).send('not found user');
           }
