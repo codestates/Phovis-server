@@ -9,10 +9,11 @@ import {
   ContentCardSeed,
   ContentSeed,
   UserSeed,
-  ImageSeed,
-  ImageCardSeed,
+  contentImageSeed,
+  photocardImageSeed,
   LocationSeed,
-  TagSeed,
+  contentTagSeed,
+  ImageCardSeed,
 } from './seed/index';
 import {
   Content,
@@ -27,49 +28,126 @@ import {
 const InsertSeedData = async () => {
   const connection = await createConnection();
   try {
-    Group.forEach(
-      async (el) => await makeRelation(el.entity, el.fields, connection)
-    );
-
-    let contentcardinstance = transformInstance(ContentCardSeed, ContentCard);
-    let imageinstance = transformInstance(ImageSeed, Image);
-    let imagecardinstance = transformInstance(ImageCardSeed, Imagecard);
-    let locationinsatance = transformInstance(LocationSeed, Location);
-    let taginstance = transformInstance(TagSeed, Tag);
-    let userinstance = transformInstance(UserSeed, User);
     let contentinstance = transformInstance(ContentSeed, Content);
+    let contentCardinstance = transformInstance(ContentCardSeed, ContentCard);
+    let contentImageinstance = transformInstance(contentImageSeed, Image);
+    let locationinsatance = transformInstance(LocationSeed, Location);
+    let contentTaginstance = transformInstance(contentTagSeed, Tag);
+    let userinstance = transformInstance(UserSeed, User);
+    let photoCardinstance = transformInstance(ImageCardSeed, Imagecard);
+    let photocardImageinstance = transformInstance(photocardImageSeed, Image);
 
-    await insertJoinColumn(taginstance, 'location', locationinsatance);
-    await insertJoinColumn(contentinstance, 'tag', taginstance);
-    await insertJoinColumn(contentcardinstance, 'image', imageinstance, 'O');
-    await insertJoinColumn(contentinstance, 'image', imageinstance, 'O');
-    await insertJoinColumn(contentinstance, 'contentCard', contentcardinstance);
-    await insertJoinColumn(
-      imagecardinstance,
-      'location',
-      locationinsatance,
-      'O'
-    );
-    await insertJoinColumn(locationinsatance, 'content', contentinstance);
-    await insertJoinColumn(imagecardinstance, 'image', imageinstance, 'O');
-    await insertJoinColumn(userinstance, 'content', contentinstance);
-    await insertJoinColumn(userinstance, 'imagecards', imagecardinstance);
+    for (let i = 0; i < contentinstance.length; i++) {
+      contentinstance[i].image = contentImageinstance[i][0];
+      locationinsatance[i].content = locationinsatance[i].content || [];
+      contentinstance[i].contentCard = contentinstance[i].contentCard || [];
+      userinstance[i].content = userinstance[i].content || [];
+      userinstance[i].favourite = userinstance[i].favourite || [];
+      userinstance[i].bookmark = userinstance[i].bookmark || [];
 
-    let result: any[] = [];
-    for (let i = 0; i < userinstance.length; i++) {
-      result.unshift(userinstance[i]);
+      for (let j = 0; j < contentCardinstance[i].length; j++) {
+        contentCardinstance[i][j] = {
+          ...contentCardinstance[i][j],
+          image: contentImageinstance[i][j],
+        };
+
+        contentinstance[i] = {
+          ...contentinstance[i],
+          contentCard: [
+            ...contentinstance[i].contentCard,
+            ...contentCardinstance[i][j],
+          ],
+        };
+      }
+      locationinsatance[i] = {
+        ...locationinsatance[i],
+        content: [...locationinsatance[i].content, ...contentinstance[i]],
+      };
+
+      userinstance[i] = {
+        ...userinstance[i],
+        content: [...userinstance[i].content, ...contentinstance[i]],
+      };
+
+      userinstance[i] = {
+        ...userinstance[i],
+        favourite:
+          Math.floor(Math.random() * 30) % 2 === 1
+            ? [...userinstance[i].favourite, ...contentinstance[i]]
+            : [...userinstance[i].favourite],
+      };
+      userinstance[i] = {
+        ...userinstance[i],
+        bookmark:
+          Math.floor(Math.random() * 30) % 2 === 1
+            ? [...userinstance[i].bookmark, ...contentinstance[i]]
+            : [...userinstance[i].bookmark],
+      };
     }
-    await insertJoinColumn(userinstance, 'follower', result);
-    await insertJoinColumn(userinstance, 'bookmark', contentinstance);
-    await insertJoinColumn(userinstance, 'favourite', contentinstance);
 
-    await connection.getRepository(Tag).save(taginstance);
+    for (let i = 0; i < photoCardinstance.length; i++) {
+      photoCardinstance[i] = {
+        ...photoCardinstance[i],
+        image: photocardImageinstance[i],
+      };
+
+      photoCardinstance[i] = {
+        ...photoCardinstance[i],
+        user: userinstance[i % 4],
+      };
+
+      photoCardinstance[i] = {
+        ...photoCardinstance[i],
+        location: locationinsatance[i % 4],
+      };
+    }
+
+    for (let i = 0; i < contentTaginstance.length; i++) {
+      const ci = Math.floor(Math.random() * 20) % 4;
+      const imgi = Math.floor(Math.random() * 20) % 4;
+      contentinstance[ci].tag = contentinstance[ci].tag || [];
+      contentinstance[ci] = {
+        ...contentinstance[ci],
+        tag: [...contentinstance[ci].tag, ...contentTaginstance[i]],
+      };
+      contentTaginstance[i].location = contentTaginstance[i].location || [];
+      contentTaginstance[i] = {
+        ...contentTaginstance[i],
+        location: [
+          ...contentTaginstance[i].location,
+          ...locationinsatance[Math.floor(Math.random() * 20) % 3],
+        ],
+      };
+      contentTaginstance[i].content = contentTaginstance[i].content || [];
+
+      contentTaginstance[i] = {
+        ...contentTaginstance[i],
+        content: [
+          ...contentTaginstance[i].content,
+          ...contentinstance[Math.floor(Math.random() * 20) % 3],
+        ],
+      };
+      photoCardinstance[imgi].tag = photoCardinstance[imgi].tag || [];
+      photoCardinstance[imgi] = {
+        ...photoCardinstance[imgi],
+        tag: [...photoCardinstance[imgi].tag, ...contentTaginstance[i]],
+      };
+      console.log(contentTaginstance[i].content);
+    }
+    for (let i = 0; i < 15; i++) {
+      Array.isArray(contentCardinstance[i]) &&
+        (await connection
+          .getRepository(ContentCard)
+          .save(contentCardinstance[i]));
+      Array.isArray(contentImageinstance[i]) &&
+        (await connection.getRepository(Image).save(contentImageinstance[i]));
+    }
+    await connection.getRepository(Image).save(photocardImageinstance);
+    await connection.getRepository(Tag).save(contentTaginstance);
     await connection.getRepository(Location).save(locationinsatance);
-    await connection.getRepository(Image).save(imageinstance);
-    await connection.getRepository(ContentCard).save(contentcardinstance);
     await connection.getRepository(User).save(userinstance);
     await connection.getRepository(Content).save(contentinstance);
-    await connection.getRepository(Imagecard).save(imagecardinstance);
+    await connection.getRepository(Imagecard).save(photoCardinstance);
 
     console.log('make Seed! check your database');
   } catch (err) {

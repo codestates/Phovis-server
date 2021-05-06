@@ -53,6 +53,7 @@ export class Content {
 
   @ManyToMany(() => Tag, (tag) => tag.content, {
     nullable: true,
+    cascade: ['insert', 'update'],
   })
   @JoinTable()
   tag!: Tag[];

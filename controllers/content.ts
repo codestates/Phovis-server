@@ -35,7 +35,6 @@ class contentController {
       // json 데이터 변환
       const convetTags = tags ? (JSON.parse(tags) as string[]) : [];
       const convertLocation = JSON.parse(location) as Locationtype;
-      console.log(convertLocation);
       const convertImages = [];
       if (Array.isArray(images)) {
         images.forEach((el) => {
@@ -88,7 +87,7 @@ class contentController {
         lng,
         location: rest.location,
       });
-      console.log(locationid);
+
       let { identifiers: contentid } = await insertdb(Content, {
         title,
         description,
@@ -181,7 +180,7 @@ class contentController {
         .leftJoin('location.content', 'content')
         .where('location.id = :id', { id: locationid[0].id })
         .getOne()) as Location;
-      console.log(locations);
+
       //보내 줘야할 객체 생성
       result = transfromContentResult(result, contentCards, tag, locations);
 
