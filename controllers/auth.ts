@@ -106,63 +106,71 @@ class authController {
     const { email, password } = req.body as loginReqeustBody;
     if (!email || !password) {
       res.status(404).send('bad request');
-    }
-    const user = await getRepository(User)
-      .createQueryBuilder('user')
-      .where('user.email = :email', { email })
-      .getOne();
-    const decodedPW = user && cryptoPW(password as string, user.id);
-    if (user && decodedPW === user.password) {
-      const { accessToken, refreshToken } = signToken(user.id);
-      res
-        .status(201)
-        .cookie('refreshToken', refreshToken, {
-          maxAge: 864000,
-          secure: true,
-          sameSite: 'none',
-        })
-        .send({ accessToken });
     } else {
-      res.status(404).send('not found user');
+      const user = await getRepository(User)
+        .createQueryBuilder('user')
+        .where('user.email = :email', { email })
+        .getOne();
+      const decodedPW = user && cryptoPW(password as string, user.id);
+      if (user && decodedPW === user.password) {
+        const { accessToken, refreshToken } = signToken(user.id);
+        res
+          .status(201)
+          .cookie('refreshToken', refreshToken, {
+            maxAge: 864000,
+            secure: true,
+            sameSite: 'none',
+          })
+          .send({ accessToken });
+      } else {
+        res.status(404).send('not found user');
+      }
     }
   };
   // 회원가입
   public signup = async (req: Request, res: Response): Promise<void> => {
     const { userName, email, password } = req.body as signupRequestBody;
-    if (!email || !password) res.status(403).send('not enough prams');
-    const user = await getRepository(User)
-      .createQueryBuilder('user')
-      .where('user.email = :email', { email })
-      .getOne();
-    if (!user) {
-      const { identifiers } = await getRepository(User)
-        .createQueryBuilder()
-        .insert()
-        .into(User)
-        .values([
-          {
-            userName: userName || 'unkown',
-            email,
-            password: '',
-            imgUrl:
-              'https://phovisimgs.s3.ap-northeast-2.amazonaws.com/blank-profile-picture-973460_1280-300x300-1.jpg',
-            type: 'email',
-          },
-        ])
-        .execute();
-      const { id } = identifiers[0];
-      const option = new Option();
-      option.user = identifiers[0] as User;
-      await getRepository(Option).save(option);
+    try {
+      if (!email || !password) {
+        res.status(403).send('not enough prams');
+      } else {
+        const user = await getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.email = :email', { email })
+          .getOne();
+        if (!user) {
+          const { identifiers } = await getRepository(User)
+            .createQueryBuilder()
+            .insert()
+            .into(User)
+            .values([
+              {
+                userName: userName || 'unkown',
+                email,
+                password: '',
+                imgUrl:
+                  'https://phovisimgs.s3.ap-northeast-2.amazonaws.com/blank-profile-picture-973460_1280-300x300-1.jpg',
+                type: 'email',
+              },
+            ])
+            .execute();
+          const { id } = identifiers[0];
+          const option = new Option();
+          option.user = identifiers[0] as User;
+          await getRepository(Option).save(option);
 
-      const user = await getRepository(User).findOneOrFail(id);
-      const encodePW = cryptoPW(password, id);
-      user.Option = option;
-      user.password = encodePW;
-      await getRepository(User).save(user);
-      res.status(201).send('ok');
-    } else {
-      res.status(404).send('valid email');
+          const user = await getRepository(User).findOneOrFail(id);
+          const encodePW = cryptoPW(password, id);
+          user.Option = option;
+          user.password = encodePW;
+          await getRepository(User).save(user);
+          res.status(201).send('ok');
+        } else {
+          res.status(404).send('valid email');
+        }
+      }
+    } catch (e) {
+      res.status(400).send('bad Request');
     }
   };
   // 구글 회원가입
@@ -245,7 +253,7 @@ class authController {
         qs.stringify({
           grant_type: 'authorization_code',
           client_id: process.env.KAKAO_CLIENT_ID as string,
-          redirect_uri: 'http://localhost:3000/auth/kakao',
+          redirect_uri: `${process.env.CLIENT_URL}/auth/kakao`,
           code: kakaoCode,
           client_secret: process.env.KAKAO_CLIENT_SECRET as string,
         }),
@@ -371,17 +379,21 @@ class authController {
   };
   public signOut = async (req: Request, res: Response): Promise<void> => {
     const { checkedId } = req;
-    if (!checkedId) {
-      res.status(401).send('not authorized');
-    } else {
-      const { key } = req.body;
-      if (req.session.token === key) {
-        const userRepo = await getRepository(User);
-        await userRepo.softDelete(checkedId);
-        res.status(201).send({ message: 'ok' });
+    try {
+      if (!checkedId) {
+        res.status(401).send('not authorized');
       } else {
-        res.status(400).send('bad Request');
+        const { key } = req.body;
+        if (req.session.token === key) {
+          const userRepo = await getRepository(User);
+          await userRepo.softDelete(checkedId);
+          res.status(201).send({ message: 'ok' });
+        } else {
+          res.status(400).send('bad Request');
+        }
       }
+    } catch (e) {
+      res.status(400).send('bad Request');
     }
   };
 }
