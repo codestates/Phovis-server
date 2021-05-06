@@ -33,10 +33,10 @@ export class Content {
   @ManyToOne(() => User, (user) => user.content)
   user!: User;
 
-  @ManyToMany(() => User)
+  @ManyToMany(() => User, (user) => user.bookmark)
   bookmark!: User[];
 
-  @ManyToMany(() => User)
+  @ManyToMany(() => User, (user) => user.favourite)
   favourite!: User[];
 
   @OneToMany(() => ContentCard, (contentcard) => contentcard.content, {
@@ -51,13 +51,13 @@ export class Content {
   @JoinColumn()
   image!: Image;
 
-  @ManyToMany(() => Tag, {
+  @ManyToMany(() => Tag, (tag) => tag.content, {
     nullable: true,
   })
   @JoinTable()
   tag!: Tag[];
 
-  @ManyToMany(() => Location)
+  @ManyToMany(() => Location, (location) => location.content)
   location!: Location[];
 
   @CreateDateColumn({

@@ -35,6 +35,7 @@ class contentController {
       // json 데이터 변환
       const convetTags = tags ? (JSON.parse(tags) as string[]) : [];
       const convertLocation = JSON.parse(location) as Locationtype;
+      console.log(convertLocation);
       const convertImages = [];
       if (Array.isArray(images)) {
         images.forEach((el) => {
@@ -87,7 +88,7 @@ class contentController {
         lng,
         location: rest.location,
       });
-
+      console.log(locationid);
       let { identifiers: contentid } = await insertdb(Content, {
         title,
         description,
@@ -230,14 +231,10 @@ class contentController {
         let locations = (await getRepository(Location)
           .createQueryBuilder('location')
           .select(['location.location', 'location.lat', 'location.lng'])
-          .leftJoinAndSelect(
-            'location.content',
-            'content',
-            'content.id = :id',
-            {
-              id: contentid,
-            }
-          )
+          .leftJoin('location.content', 'content')
+          .where('content.id = :id', {
+            id: contentid,
+          })
           .getOne()) as Location;
 
         const like = (await getRepository(User)
