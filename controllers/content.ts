@@ -180,7 +180,7 @@ class contentController {
         .leftJoin('location.content', 'content')
         .where('location.id = :id', { id: locationid[0].id })
         .getOne()) as Location;
-
+      console.log(locations);
       //보내 줘야할 객체 생성
       result = transfromContentResult(result, contentCards, tag, locations);
 
@@ -240,6 +240,14 @@ class contentController {
           )
           .getOne()) as Location;
 
+        const like = (await getRepository(User)
+          .createQueryBuilder('user')
+          .innerJoinAndSelect('user.content', 'content', 'content.id = :id', {
+            id: contentid,
+          })
+          .loadRelationCountAndMap('user.favouriteCount', 'user.favourite')
+          .getOne()) as any;
+
         const likeinfo = await getRepository(User)
           .createQueryBuilder('user')
           .innerJoin('user.favourite', 'favourite')
@@ -258,9 +266,9 @@ class contentController {
           .andWhere('user.id = :userid', { userid: req.checkedId })
           .getOne();
 
-        result.islike = likeinfo ? true : false;
-        result.isbookmark = bookmark ? true : false;
-
+        result.isLike = likeinfo ? true : false;
+        result.isBookmark = bookmark ? true : false;
+        result.like = like ? like.favouriteCount : 0;
         //보내 줘야할 객체 생성
         result = transfromContentResult(result, contentCards, tag, locations);
 
@@ -300,7 +308,7 @@ class contentController {
       }
     } else if (req.query.filter || req.query.userId) {
       let result = [];
-      if (!req.query.filter) {
+      if (!req.query.filter && req.query.userId) {
         try {
           result = (await getRepository(Content)
             .createQueryBuilder('content')
