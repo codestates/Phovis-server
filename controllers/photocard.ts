@@ -131,7 +131,6 @@ class photocardController {
           relations: ['tag', 'tag.imagecard'],
           where: { id: req.query.contentId },
         })) as any;
-
         const findkeys = [] as string[];
 
         if (result[0].tag) {
@@ -141,7 +140,10 @@ class photocardController {
             );
           }
         }
-
+        if (findkeys.length === 0) {
+          res.status(200).send({ data: [] });
+          return;
+        }
         const imagecard = await getRepository(Imagecard)
           .createQueryBuilder('imagecard')
           .select(['imagecard.description', 'imagecard.id'])

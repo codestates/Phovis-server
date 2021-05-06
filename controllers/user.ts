@@ -94,24 +94,20 @@ class userController {
       try {
         const userRepo = await getRepository(User);
         const contentRepo = await getRepository(Content);
-        const content = await contentRepo.findOne(contentId, {
+        const content = await contentRepo.findOne({
           relations: ['favourite'],
+          where: { id: contentId },
         });
-        const user = await userRepo.findOne(checkedId, {
+        const user = await userRepo.findOne({
           relations: ['favourite'],
+          where: { id: checkedId },
         });
         if (user && content) {
           const leftFavor = user.favourite.filter(
             (list) => list.id !== contentId
           );
-          const leftIsFavorUser = content.favourite.filter(
-            (list) => list.id !== checkedId
-          );
           const isLike = leftFavor.length === user.favourite.length;
           user.favourite = isLike ? [...leftFavor, content] : [...leftFavor];
-          content.favourite = isLike
-            ? [...leftIsFavorUser, user]
-            : [...leftIsFavorUser];
           userRepo.save(user);
           contentRepo.save(content);
           res.status(201).send({ isLike });
@@ -139,27 +135,23 @@ class userController {
       try {
         const userRepo = await getRepository(User);
         const contentRepo = await getRepository(Content);
-        const user = await userRepo.findOne(checkedId, {
+        const user = await userRepo.findOne({
           relations: ['bookmark'],
+          where: { id: checkedId },
         });
-        const content = await contentRepo.findOne(contentId, {
+        const content = await contentRepo.findOne({
           relations: ['bookmark'],
+          where: { id: contentId },
         });
 
         if (user && content) {
           const leftBookmarks = user.bookmark.filter(
             (list) => list.id !== contentId
           );
-          const leftIsBookmarkUser = content.bookmark.filter(
-            (list) => list.id !== checkedId
-          );
           const isBookmark = leftBookmarks.length === user.bookmark.length;
           user.bookmark = isBookmark
             ? [...leftBookmarks, content]
             : [...leftBookmarks];
-          content.bookmark = isBookmark
-            ? [...leftIsBookmarkUser, user]
-            : [...leftIsBookmarkUser];
           userRepo.save(user);
           contentRepo.save(content);
           res.status(201).send({ isBookmark });
