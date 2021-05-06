@@ -23,7 +23,7 @@ export async function CreateResult(result: any, checkedid?: string | null) {
         })
         .getOne()) as any;
 
-      let likes = (await getRepository(User)
+      let like = (await getRepository(User)
         .createQueryBuilder('user')
         .innerJoinAndSelect('user.content', 'content', 'content.id = :id', {
           id: result[i].id,
@@ -31,7 +31,7 @@ export async function CreateResult(result: any, checkedid?: string | null) {
         .loadRelationCountAndMap('user.favouriteCount', 'user.favourite')
         .getOne()) as any;
 
-      if (tempContentCard && location && likes) {
+      if (tempContentCard && location && like) {
         const { image, ...rest1 } = tempContentCard;
         result[i].contentCard[j] = {
           ...rest1,
@@ -40,8 +40,8 @@ export async function CreateResult(result: any, checkedid?: string | null) {
         const { content, ...rest2 } = location;
         result[i].location = rest2;
 
-        const { favouriteCount } = likes;
-        result[i].likes = favouriteCount;
+        const { favouriteCount } = like;
+        result[i].like = favouriteCount;
       }
     }
     if (result[i].tag) {
